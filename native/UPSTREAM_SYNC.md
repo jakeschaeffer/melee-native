@@ -95,6 +95,8 @@ branch's executable, `MELEE_TEST_CAPTURE=0`, and your locally owned disc path:
 - `native/tests/match-controls.input`: VS CPU, movement, attacks, pause/resume.
 - `native/tests/classic-start.input`: normal menus into a Classic fight.
 - `native/tests/classic-continue.input`: lose, choose Continue, reach another fight.
+- `native/tests/mute-city-soak.input`: one minute of racing-car hazards, with
+  the explicit matrix environment listed in `INTEGRATION_VALIDATION.md`.
 - Exercise both `MELEE_WIDESCREEN=0` and `1`; manually inspect Native (4:3), 21:9,
   fullscreen, and menu/HUD proportions. Scripts do not prove visual fidelity.
 

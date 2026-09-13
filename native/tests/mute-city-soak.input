@@ -1,0 +1,29 @@
+# Run with MELEE_MATRIX_TEST=1 MELEE_TEST_FORCE_STAGE=1 MELEE_TEST_STAGE=10.
+# Both CPU fighters exercise racing-car hazards for a minute after loading.
+180 NONE
+2 D
+20 NONE
+6 X
+45 NONE
+6 X
+600 SCENE_MOVIE
+30 NONE
+6 START
+600 SCENE_TITLE
+90 NONE
+6 START
+600 SCENE_MENU
+120 NONE
+2 S
+20 NONE
+6 X
+90 NONE
+6 X
+600 SCENE_CSS
+120 NONE
+# Matrix hook preselects players and bypasses stage selection.
+6 START
+1800 SCENE_MATCH
+3600 NONE
+# Confirm the soak stayed in a match, not an unrelated scene.
+1 SCENE_MATCH
