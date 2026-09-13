@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <melee/gr/ground.h>
 #include <melee/if/ifmagnify.h>
 #include <melee/if/types.h>
 #include <sysdolphin/baselib/gobj.h>
@@ -18,6 +19,45 @@
 
 static HSD_GObj objects[6];
 static unsigned freed[6];
+
+// ELF ASan retains the unused stage-color callback table from ifmagnify.c.
+// Cleanup must never call those callbacks; keep that dependency explicit.
+GXColor* Ground_801C0604(void)
+{
+    abort();
+}
+GXColor* Ground_801C0690(void)
+{
+    abort();
+}
+GXColor* Ground_801C0618(void)
+{
+    abort();
+}
+GXColor* Ground_801C0654(void)
+{
+    abort();
+}
+GXColor* Ground_801C06A4(void)
+{
+    abort();
+}
+GXColor* Ground_801C0668(void)
+{
+    abort();
+}
+GXColor* Ground_801C062C(void)
+{
+    abort();
+}
+GXColor* Ground_801C067C(void)
+{
+    abort();
+}
+GXColor* Ground_801C0640(void)
+{
+    abort();
+}
 
 void HSD_GObjFree(HSD_GObj* gobj)
 {
