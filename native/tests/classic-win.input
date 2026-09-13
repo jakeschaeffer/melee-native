@@ -1,0 +1,38 @@
+# Normal Classic route with MELEE_TEST_CLASSIC_WIN=1. The native test hook
+# triggers one enemy blast-zone KO; the real win/results/advance path runs.
+180 NONE
+2 D
+20 NONE
+6 X
+45 NONE
+6 X
+600 SCENE_MOVIE
+30 NONE
+6 START
+600 SCENE_TITLE
+90 NONE
+6 START
+600 SCENE_MENU
+120 NONE
+6 X
+90 NONE
+6 X
+90 NONE
+6 X
+600 SCENE_CSS
+120 NONE
+7 D
+34 W
+10 NONE
+6 X
+60 NONE
+6 START
+1800 SCENE_MATCH
+# Wait for the KO, victory freeze, and bonus results overlay.
+900 NONE
+6 X
+120 NONE
+6 START
+1800 SCENE_CLASSIC_INTRO
+1800 SCENE_MATCH
+600 NONE

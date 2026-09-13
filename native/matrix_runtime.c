@@ -79,15 +79,23 @@ void MeleeNativeTestPrepareCss(CSSData* css)
 #include <melee/pl/player.h>
 #include <melee/gr/stage.h>
 #include <melee/ft/types.h>
+#include <melee/ft/ft_0D31.h>
+#include <melee/gm/gm_1A3F.h>
 #include <melee/it/itspawn.h>
 #include <sysdolphin/baselib/gobj.h>
 
 static int matrix_scene = -1;
 static unsigned matrix_frames;
+static unsigned classic_matches;
+static bool classic_win_triggered;
 void MeleeNativeMatrixScene(int scene)
 {
     matrix_scene = scene;
     matrix_frames = 0;
+    if (scene == 2 && getenv("MELEE_TEST_CLASSIC_WIN") &&
+        getenv("MELEE_INPUT_SCRIPT") && gm_GetCurrentGameMode() == GM_CLASSIC) {
+        fprintf(stderr, "[classic-win] match=%u\n", ++classic_matches);
+    }
     if (scene == 2 && getenv("MELEE_MATRIX_TEST")) {
         int expected = setting("MELEE_TEST_CHARACTER", 32, CKind_Fox);
         int actual = Player_GetPlayerCharacter(0);
@@ -102,6 +110,25 @@ void MeleeNativeMatrixScene(int scene)
 }
 void MeleeNativeMatrixTick(void)
 {
+    // Explicit regression-only KO; normal gameplay is never changed. Let the
+    // real death, victory, HUD cleanup and results/next-round logic run.
+    if (getenv("MELEE_TEST_CLASSIC_WIN") && getenv("MELEE_INPUT_SCRIPT") &&
+        matrix_scene == 2 && gm_GetCurrentGameMode() == GM_CLASSIC &&
+        classic_matches == 1 && !classic_win_triggered) {
+        if (++matrix_frames == 300) {
+            for (int slot = 1; slot < GM_MAX_PLAYERS; ++slot) {
+                HSD_GObj* enemy = Player_GetEntity(slot);
+                if (Player_GetPlayerSlotType(slot) != Gm_PKind_Cpu || !enemy)
+                    continue;
+                Player_SetStocks(slot, 1);
+                ((Fighter*) enemy->user_data)->cur_pos.y = Stage_GetBlastZoneBottomOffset() - 100;
+                if (!ftCo_800D3158(enemy))
+                    OSPanic(__FILE__, __LINE__, "Classic test KO was not accepted");
+                fprintf(stderr, "[classic-win] KO slot=%d\n", slot);
+            }
+            classic_win_triggered = true;
+        }
+    }
     if (!getenv("MELEE_MATRIX_TEST") || matrix_scene != 2 ||
         !getenv("MELEE_TEST_ITEM")) return;
     ++matrix_frames;

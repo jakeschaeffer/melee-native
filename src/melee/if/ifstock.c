@@ -54,12 +54,17 @@ int ifStock_802F7EFC(int arg0, int arg1)
     int slot;
     int i, j;
     stock = &ifStock_804A1378;
+#ifdef MELEE_NATIVE
+    arg0_data = (struct IfStockData*) &stock->x204[arg0];
+    arg1_data = (struct IfStockData*) &stock->x204[arg1];
+#else
     arg0_base =
         (struct IfStockDataOffset*) ((struct IfStockData*) stock + arg0);
     arg1_base =
         (struct IfStockDataOffset*) ((struct IfStockData*) stock + arg1);
     arg0_data = (struct IfStockData*) ++arg0_base;
     arg1_data = (struct IfStockData*) ++arg1_base;
+#endif
     if (Player_GetStocks(arg1) == 0) {
         return 1;
     }
@@ -123,16 +128,21 @@ int ifStock_802F7EFC(int arg0, int arg1)
 /// @todo remove these cursed macros for something proper.
 /// Per-player animation data, addressed as a 0x54-byte element from the struct
 /// base with the x204 array offset applied afterwards.
+#ifdef MELEE_NATIVE
+#define ifStock_802F8298_data_in(e, p) (&stock->x204[(p)])
+#define ifStock_802F8298_player_data(p) (&stock->x204[(p)])
+#else
 #define ifStock_802F8298_elem(p)                                              \
     ((struct IfStockDataOffset*) ((struct ifStock_804A1378_x204*) stock + (p)))
 #define ifStock_802F8298_data_in(e, p)                                        \
     ((struct ifStock_804A1378_x204*) (((e) = ifStock_802F8298_elem(p)) + 1))
-#define ifStock_802F8298_data_at(p) ifStock_802F8298_data_in(elem, p)
-#define ifStock_802F8298_data ifStock_802F8298_data_at(user_data->player)
 /// The same element, with the array offset committed before the field
 /// accesses.
 #define ifStock_802F8298_player_data(p)                                       \
     ((elem = ifStock_802F8298_elem(p)), (struct ifStock_804A1378_x204*) ++elem)
+#endif
+#define ifStock_802F8298_data_at(p) ifStock_802F8298_data_in(elem, p)
+#define ifStock_802F8298_data ifStock_802F8298_data_at(user_data->player)
 
 static inline f32 ifStock_802F8298_tobj_frame(u8 player)
 {

@@ -389,3 +389,43 @@ target_link_options(native_item_pick_test PRIVATE -fsanitize=address,undefined
   $<$<PLATFORM_ID:Darwin>:-Wl,-dead_strip> $<$<PLATFORM_ID:Linux>:-Wl,--gc-sections>)
 add_test(NAME native_item_pick COMMAND native_item_pick_test)
 set_tests_properties(native_item_pick PROPERTIES LABELS melee)
+
+add_executable(native_magnify_cleanup_test tests/magnify_cleanup_test.c "${MELEE_ROOT}/src/melee/if/ifmagnify.c")
+target_include_directories(native_magnify_cleanup_test PRIVATE $<TARGET_PROPERTY:melee_game,INCLUDE_DIRECTORIES>)
+target_compile_definitions(native_magnify_cleanup_test PRIVATE $<TARGET_PROPERTY:melee_game,COMPILE_DEFINITIONS>)
+target_compile_options(native_magnify_cleanup_test PRIVATE $<TARGET_PROPERTY:melee_game,COMPILE_OPTIONS>
+  -UNDEBUG -ffunction-sections -fdata-sections -fsanitize=address,undefined)
+target_link_options(native_magnify_cleanup_test PRIVATE -fsanitize=address,undefined
+  $<$<PLATFORM_ID:Darwin>:-Wl,-dead_strip> $<$<PLATFORM_ID:Linux>:-Wl,--gc-sections>)
+add_test(NAME native_magnify_cleanup COMMAND native_magnify_cleanup_test)
+set_tests_properties(native_magnify_cleanup PROPERTIES LABELS melee)
+
+add_executable(native_classic_result_test tests/classic_result_test.c "${MELEE_ROOT}/src/melee/gm/gm_17EB.c")
+target_include_directories(native_classic_result_test PRIVATE $<TARGET_PROPERTY:melee_game,INCLUDE_DIRECTORIES>)
+target_compile_definitions(native_classic_result_test PRIVATE $<TARGET_PROPERTY:melee_game,COMPILE_DEFINITIONS>)
+target_compile_options(native_classic_result_test PRIVATE $<TARGET_PROPERTY:melee_game,COMPILE_OPTIONS>
+  -UNDEBUG -ffunction-sections -fdata-sections -fsanitize=address,undefined)
+target_link_options(native_classic_result_test PRIVATE -fsanitize=address,undefined
+  $<$<PLATFORM_ID:Darwin>:-Wl,-dead_strip> $<$<PLATFORM_ID:Linux>:-Wl,--gc-sections>)
+add_test(NAME native_classic_result COMMAND native_classic_result_test)
+set_tests_properties(native_classic_result PROPERTIES LABELS melee)
+
+add_executable(native_regclear_layout_test tests/regclear_layout_test.c)
+target_include_directories(native_regclear_layout_test PRIVATE $<TARGET_PROPERTY:melee_game,INCLUDE_DIRECTORIES>)
+target_compile_definitions(native_regclear_layout_test PRIVATE $<TARGET_PROPERTY:melee_game,COMPILE_DEFINITIONS>)
+target_compile_options(native_regclear_layout_test PRIVATE $<TARGET_PROPERTY:melee_game,COMPILE_OPTIONS>
+  -UNDEBUG -ffunction-sections -fdata-sections -fsanitize=address,undefined)
+target_link_options(native_regclear_layout_test PRIVATE -fsanitize=address,undefined
+  $<$<PLATFORM_ID:Darwin>:-Wl,-dead_strip> $<$<PLATFORM_ID:Linux>:-Wl,--gc-sections>)
+add_test(NAME native_regclear_layout COMMAND native_regclear_layout_test)
+set_tests_properties(native_regclear_layout PROPERTIES LABELS melee)
+
+add_executable(native_stock_layout_test tests/stock_layout_test.c)
+target_include_directories(native_stock_layout_test PRIVATE $<TARGET_PROPERTY:melee_game,INCLUDE_DIRECTORIES>)
+target_compile_definitions(native_stock_layout_test PRIVATE $<TARGET_PROPERTY:melee_game,COMPILE_DEFINITIONS>)
+target_compile_options(native_stock_layout_test PRIVATE $<TARGET_PROPERTY:melee_game,COMPILE_OPTIONS>
+  -UNDEBUG -ffunction-sections -fdata-sections -fsanitize=address,undefined)
+target_link_options(native_stock_layout_test PRIVATE -fsanitize=address,undefined
+  $<$<PLATFORM_ID:Darwin>:-Wl,-dead_strip> $<$<PLATFORM_ID:Linux>:-Wl,--gc-sections>)
+add_test(NAME native_stock_layout COMMAND native_stock_layout_test)
+set_tests_properties(native_stock_layout PROPERTIES LABELS melee)

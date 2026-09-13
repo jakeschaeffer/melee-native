@@ -17,6 +17,7 @@
 #include <melee/lb/lbaudio_ax.h>
 #include <melee/lb/lblanguage.h>
 #include <melee/lb/lbspdisplay.h>
+#include <melee/lb/types.h>
 #include <melee/mn/inlines.h>
 #include <melee/pl/player.h>
 #include <melee/sc/types.h>
@@ -34,19 +35,51 @@
 #include <sysdolphin/baselib/tobj.h>
 
 struct lbl_80472D28_t {
+#ifdef MELEE_NATIVE
+    /* The two console-layout views must share one pointer-expanded object. */
+    HSD_GObj* x0;
+    HSD_JObj* x4;
+    HSD_JObj* x8;
+    HSD_JObj* xC;
+    HSD_JObj* x10;
+    HSD_JObj* x14;
+    HSD_JObj* x18;
+    HSD_JObj* x1C;
+#else
     /*   +0 */ char pad_0[0x20];
+#endif
     /* +20 */ HSD_JObj* x20;
     /* +24 */ HSD_JObj* x24;
+#ifdef MELEE_NATIVE
+    HSD_JObj* x28;
+#else
     /* +28 */ char pad_28[4];
+#endif
     /* +2C */ HSD_GObj* x2C;
     /* +30 */ HSD_ImageDesc x30;
     /* +48 */ HSD_Archive* x48;
     /* +4C */ DynamicModelDesc x4C;
     /* +5C */ void* x5C;
     /* +60 */ void* x60;
+#ifdef MELEE_NATIVE
+    void* x64;
+    void* x68;
+    HSD_Text* x6C;
+    HSD_Text* x70;
+    HSD_Text* x74;
+    HSD_Text* x78;
+    HSD_Text* x7C;
+    HSD_Text* x80;
+#else
     /* +64 */ char pad_64[0x20];
+#endif
     /* +84 */ HSD_Text* x84;
+#ifdef MELEE_NATIVE
+    /* Seven text handles followed by seven cached numeric bonus values. */
+    char pad_88[7 * sizeof(HSD_Text*) + 7 * sizeof(s32)];
+#else
     /* +88 */ char pad_88[0x38];
+#endif
     /* +C0 */ u16 xC0;
     /* +C2 */ u16 pad_C2;
     /* +C4 */ u32 xC4;
@@ -281,9 +314,18 @@ s32 fn_8017F47C(HSD_Text** arg0, int arg1)
     fn_8016F39C(arg0 + 1, gm_8016B774(), 7, arg1, mask, 0);
 
     i = 0;
+#ifdef MELEE_NATIVE
+    p = (s32*) (arg0 + 8);
+#else
     p = (s32*) arg0;
+#endif
 
     do {
+#ifdef MELEE_NATIVE
+        s32* cached_value = p;
+#else
+        s32* cached_value = &p[8];
+#endif
         mask = fn_8017F008();
         idx = fn_8016F548(gm_8016B774(), entry, mask, 0);
         mask = fn_8017F008();
@@ -293,13 +335,13 @@ s32 fn_8017F47C(HSD_Text** arg0, int arg1)
             break;
         }
 
-        if (p[8] != val) {
+        if (*cached_value != val) {
             if (val < 0) {
                 HSD_SisLib_803A70A0(*arg0, i, "%s%d", "－", -val);
             } else {
                 HSD_SisLib_803A70A0(*arg0, i, "%d", val);
             }
-            p[8] = val;
+            *cached_value = val;
         }
 
         prev_idx = idx;
@@ -322,6 +364,9 @@ s32 fn_8017F47C(HSD_Text** arg0, int arg1)
     PAD_STACK(0x18);
 }
 
+#ifdef MELEE_NATIVE
+typedef struct lbl_80472D28_t fn_8017FA1C_arg;
+#else
 typedef struct fn_8017FA1C_arg {
     /* 0x000 */ HSD_GObj* x0;
     /* 0x004 */ HSD_JObj* x4;
@@ -368,6 +413,7 @@ typedef struct fn_8017FA1C_arg {
     /* 0x11A */ u8 x11A;
     /* 0x11B */ u8 x11B;
 } fn_8017FA1C_arg;
+#endif
 
 static const Vec3 lbl_803B7C18 = { -41.0f, -0.25f, 0.0f };
 
@@ -644,6 +690,20 @@ void fn_8017FBA4(void* arg0)
 
 void fn_8017FE54(HSD_GObj* gobj)
 {
+#ifdef MELEE_NATIVE
+    struct CameraBlurData* ev = gobj->user_data;
+    struct lbl_80472D28_t* state = &lbl_80472D28;
+
+    lb_800122C8(ev->efb_copy, 0, 0, 1);
+    lb_800138D8(state->x2C, (int) (120.0F * state->x10C) + 1);
+    ev->tint_factor = 0.0225F * (f32) state->x110 - 0.175F;
+    if (ev->tint_factor < 0.05F) {
+        ev->tint_factor = 0.0F;
+    }
+    if (ev->tint_factor > 1.0F) {
+        ev->tint_factor = 1.0F;
+    }
+#else
     RegClearEv* ev = gobj->user_data;
     struct lbl_80472D28_t* state = &lbl_80472D28;
 
@@ -658,6 +718,7 @@ void fn_8017FE54(HSD_GObj* gobj)
     if (ev->x20 > 1.0F) {
         ev->x20 = 1.0F;
     }
+#endif
 }
 
 void fn_8017FF1C(HSD_GObj* gobj)
@@ -903,6 +964,24 @@ fn_80180630_GetModelDesc(struct lbl_80472D28_t* state)
     return &state->x4C;
 }
 
+#ifdef MELEE_NATIVE
+static void fn_80180630_LoadScene(struct lbl_80472D28_t* state,
+                                  const SceneDesc* scene)
+{
+    /* fn_80168A6C copies eight console words; use materialized host pointers.
+     */
+    if (scene->models[0] != NULL) {
+        state->x4C = *scene->models[0];
+    }
+    state->x5C = scene->lights;
+    if (scene->cameras != NULL) {
+        state->x60 = scene->cameras->desc;
+        state->x64 = scene->cameras->anims;
+    }
+    state->x68 = scene->fogs;
+}
+#endif
+
 static inline void fn_80180630_SetupSisLib(HSD_GObj* cam_gobj)
 {
     HSD_SisLib_803A611C(0, cam_gobj, 9U, 0xDU, 0U, 0xEU, 0U, 0x13U);
@@ -1054,7 +1133,11 @@ void fn_80180630(int arg0, int arg1, int arg2, bool arg3, MatchEnd* arg4)
             OSReport("Error : Cannot open archive file (File Name : %s).",
                      "GmRegClr");
         }
+#ifdef MELEE_NATIVE
+        fn_80180630_LoadScene(state, scene_data);
+#else
         fn_80168A6C(scene_data, fn_80180630_GetModelDesc(state), 0);
+#endif
     }
 
     fn_80180630_CreateLightAndCamera(state, &cam_gobj);
