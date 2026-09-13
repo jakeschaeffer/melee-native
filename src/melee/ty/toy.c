@@ -17,11 +17,11 @@
 #include <dolphin/os.h>
 #include <melee/db/db.h>
 #include <melee/gm/gm_1601.h>
-#include <melee/gm/gm_16AE.h>
 #include <melee/gm/gm_16F1.h>
 #include <melee/gm/gm_1A3F.h>
-#include <melee/gm/gm_1A45.h>
 #include <melee/gm/gmmain_lib.h>
+#include <melee/gm/gmscene.h>
+#include <melee/gm/gmvs.h>
 #include <melee/if/textdraw.h>
 #include <melee/if/textlib.h>
 #include <melee/lb/lb_00B0.h>
@@ -1881,19 +1881,18 @@ void Toy_80306930(HSD_GObj* gobj, int unused)
 void Toy_80306954(HSD_GObj* gobj, int unused)
 {
     void* state;
-    char* tbl;
-    char* entry;
+    s32 light_idx;
 
-    tbl = _Toy_str_TyLight_dat;
     state = Toy_sbss_804D6ED4;
-    if (HSD_CObjSetCurrent((HSD_CObj*) gobj->hsd_obj)) {
+    if (HSD_CObjSetCurrent(GET_COBJ(gobj)) != 0) {
         if (_Toy_sbss_804D6E50 == 0) {
-            entry = tbl + M2C_FIELD(state, s32*, 0x10) * 0xC;
-            if (*(s32*) (entry + 0x104) != 0) {
-                HSD_SetEraseColor(
-                    *(u8*) (entry + 0x100), *(u8*) (entry + 0x101),
-                    *(u8*) (entry + 0x102), *(u8*) (entry + 0x103));
-                HSD_CObjEraseScreen((HSD_CObj*) gobj->hsd_obj, 1, 0, 0);
+            light_idx = ((ToyCameraControl*) state)->x10;
+            if (_Toy_803FDDE4.values[light_idx].flag) {
+                HSD_SetEraseColor(_Toy_803FDDE4.values[light_idx].color.r,
+                                  _Toy_803FDDE4.values[light_idx].color.g,
+                                  _Toy_803FDDE4.values[light_idx].color.b,
+                                  _Toy_803FDDE4.values[light_idx].color.a);
+                HSD_CObjEraseScreen(GET_COBJ(gobj), 1, 0, 0);
             }
         }
         HSD_GObj_80390ED0(gobj, 7);
@@ -1979,7 +1978,7 @@ void Toy_80306BB8(HSD_GObj* gobj)
                 HSD_JObjClearFlagsAll(gobj->hsd_obj, JOBJ_HIDDEN);
             }
 
-            HSD_GObjProc_8038FE24(HSD_GObj_804D7838);
+            HSD_GObjProc_RemoveProc(HSD_GObj_CurrentInvokedProc);
         }
     } else {
         if (!lb_8000B09C(jobj)) {
@@ -2057,8 +2056,8 @@ void Toy_80306D70(s32 arg0)
         data = (TyLightData*) Toy_sbss_804D6ED4;
 
         if (data->archive != NULL && data->gobj != NULL) {
-            HSD_GObjProc_8038FED4(data->gobj);
-            HSD_GObjPLink_80390228(data->gobj);
+            HSD_GObjProc_RemoveAllProcs(data->gobj);
+            HSD_GObjFree(data->gobj);
             data->gobj = NULL;
             idx = base->entries[arg0].idx;
             sym = base->symbols[idx].name;
@@ -2318,13 +2317,6 @@ static inline void Toy_AddPanelAnims(HSD_JObj* jobj,
     HSD_JObjAddAnimAll(jobj, anim, matanim, shapanim);
 }
 
-static inline HSD_MatAnimJoint*
-Toy_GetPanelMatAnim(s32 arg0, ToyPanelLabelData* data, ToyGlobalsS_* tg)
-{
-    return HSD_ArchiveGetPublicAddress(tg->x50,
-                                       (&data->ptrs[arg0 * 3])[0x228 / 4]);
-}
-
 void Toy_80307470(s32 arg0)
 {
     ToyGlobalsS_* tg;
@@ -2347,7 +2339,7 @@ void Toy_80307470(s32 arg0)
     }
 
     if (tg->x0 != NULL) {
-        HSD_GObjPLink_80390228(tg->x0);
+        HSD_GObjFree(tg->x0);
         tg->x0 = NULL;
     }
 
@@ -2359,12 +2351,14 @@ void Toy_80307470(s32 arg0)
 
         loaded_jobj = HSD_JObjLoadJoint(joint[0]);
         anim[0] = HSD_ArchiveGetPublicAddress(
-            tg->x50, (&data->ptrs[arg0 * 3])[0x224 / 4]);
-        matanim[0] = Toy_GetPanelMatAnim(arg0, data, tg);
+            tg->x50, (&_Toy_803FDF3C)[arg0].animjoint);
+        matanim[0] = HSD_ArchiveGetPublicAddress(
+            tg->x50, (&_Toy_803FDF3C)[arg0].matanim_joint);
         Toy_AddPanelAnims(loaded_jobj,
                           HSD_ArchiveGetPublicAddress(
-                              tg->x50, (&data->ptrs[arg0 * 3])[0x22C / 4]),
+                              tg->x50, (&_Toy_803FDF3C)[arg0].shapeanim_joint),
                           matanim[0], anim[0]);
+
         HSD_JObjReqAnimAll(loaded_jobj, 0.0f);
         HSD_GObjObject_80390A70(tg->x0, (kind = HSD_GObj_JObjKind),
                                 loaded_jobj);
@@ -2402,8 +2396,8 @@ void _Toy_803075E8(s32 arg0)
     }
 
     if (td->gobj != NULL) {
-        HSD_GObjProc_8038FED4(td->gobj);
-        HSD_GObjPLink_80390228(td->gobj);
+        HSD_GObjProc_RemoveAllProcs(td->gobj);
+        HSD_GObjFree(td->gobj);
         td->gobj = NULL;
     }
 
@@ -2423,12 +2417,12 @@ void _Toy_803075E8(s32 arg0)
             HSD_GObjObject_80390A70(td->gobj, kind, jobj);
             GObj_SetupGXLink(td->gobj, HSD_GObj_JObjCallback, 0x33, 0);
 
-            arg0 = (u32) data + arg0 * 0xC;
-            ptr = ((ToyPanelLabelData*) arg0)->ptrs;
-            joint = HSD_ArchiveGetPublicAddress(td->archive, ptr[0x290 / 4]);
-            data = HSD_ArchiveGetPublicAddress(td->archive, ptr[0x294 / 4]);
-            shapanim =
-                HSD_ArchiveGetPublicAddress(td->archive, ptr[0x298 / 4]);
+            joint = HSD_ArchiveGetPublicAddress(td->archive,
+                                                _Toy_803FDFA8[arg0].animjoint);
+            data = HSD_ArchiveGetPublicAddress(
+                td->archive, _Toy_803FDFA8[arg0].matanim_joint);
+            shapanim = HSD_ArchiveGetPublicAddress(
+                td->archive, _Toy_803FDFA8[arg0].shapeanim_joint);
 
             if (joint != NULL || data != NULL || shapanim != NULL) {
                 HSD_JObjAddAnimAll(jobj, (HSD_AnimJoint*) joint,
@@ -2611,7 +2605,7 @@ void Toy_80307E84(HSD_GObj* gobj)
         state->x10 = 0;
         HSD_JObjRemoveAnimAll(jobj0);
         HSD_JObjRemoveAnimAll(jobj1);
-        HSD_GObjProc_8038FED4(gobj);
+        HSD_GObjProc_RemoveAllProcs(gobj);
     } else {
         state->x0F = state->x0F - 1;
         HSD_JObjAnimAll(jobj0);
@@ -2968,7 +2962,7 @@ HSD_GObj* Toy_803087F4(void* arg0)
     }
 
     if (anim->gobj != NULL) {
-        HSD_GObjPLink_80390228(anim->gobj);
+        HSD_GObjFree(anim->gobj);
         anim->gobj = NULL;
         anim->jobj[1] = NULL;
         anim->jobj[0] = NULL;
@@ -3113,16 +3107,14 @@ void _Toy_80308F04(HSD_CObj* cobj)
 
     data = (void*) &_Toy_804A26B8;
     state = _Toy_sbss_804D6E68;
-    jobj_ptr = ((Toy26B8_2*) data->x3F0)->x28;
+    jobj_ptr = data->x3F0->hsd_obj;
 
     top = HSD_CObjGetTop(cobj);
     bottom = HSD_CObjGetBottom(cobj);
     right = HSD_CObjGetRight(cobj);
     left = HSD_CObjGetLeft(cobj);
 
-    if (jobj_ptr == NULL) {
-        __assert("jobj.h", 0x378, "jobj");
-    }
+    HSD_JObjGetScaleY(jobj_ptr);
 
     if (state->x61 == 1) {
         if ((f32) state->x5C < 10.0F) {
@@ -3166,13 +3158,13 @@ void _Toy_80308F04(HSD_CObj* cobj)
             HSD_CObjSetLeft(cobj, -0.044307F);
 
             if (_Toy_sbss_804D6E58 != 0) {
-                jobj = Toy_sbss_804D6ED8->xC->x28;
+                jobj = Toy_sbss_804D6ED8->gobj2->hsd_obj;
                 while (jobj != NULL) {
                     jobj->x40 = 9;
                     jobj = jobj->x4;
                 }
             } else {
-                jobj = Toy_sbss_804D6ED8->xC->x28;
+                jobj = Toy_sbss_804D6ED8->gobj2->hsd_obj;
                 while (jobj != NULL) {
                     jobj->x40 = 8;
                     jobj = jobj->x4;
@@ -3441,7 +3433,7 @@ void _Toy_80309404(HSD_GObj* gobj)
 
     if (mn_8022F218() != 0) {
         sfxBack();
-        HSD_GObjProc_8038FE24(HSD_GObj_804D7838);
+        HSD_GObjProc_RemoveProc(HSD_GObj_CurrentInvokedProc);
         Toy_80310660(1);
         HSD_GObj_80390CD4(gobj);
         mn_8022F268();
@@ -3552,13 +3544,13 @@ void _Toy_80309404(HSD_GObj* gobj)
 
             _Toy_sbss_804D6E58 ^= 1;
             if (_Toy_sbss_804D6E58 != 0) {
-                jobj_node = (ToyJObjNode*) Toy_sbss_804D6ED8->xC->x28;
+                jobj_node = Toy_sbss_804D6ED8->gobj2->hsd_obj;
                 while (jobj_node != NULL) {
                     jobj_node->x40 = 9;
                     jobj_node = (ToyJObjNode*) jobj_node->x4;
                 }
             } else {
-                jobj_node = (ToyJObjNode*) Toy_sbss_804D6ED8->xC->x28;
+                jobj_node = Toy_sbss_804D6ED8->gobj2->hsd_obj;
                 while (jobj_node != NULL) {
                     jobj_node->x40 = 8;
                     jobj_node = (ToyJObjNode*) jobj_node->x4;
@@ -3580,7 +3572,7 @@ void _Toy_80309404(HSD_GObj* gobj)
             ((HSD_GObj*) state->x0)->gxlink_prios = 0x5048000000000000ULL;
             ((HSD_GObj*) state->x4)->gxlink_prios = 0x8000000000000000ULL;
             ((HSD_GObj*) state->xC)->gxlink_prios = 0x4000000000000000ULL;
-            jobj_node = (ToyJObjNode*) Toy_sbss_804D6ED8->xC->x28;
+            jobj_node = (ToyJObjNode*) Toy_sbss_804D6ED8->gobj2->hsd_obj;
             while (jobj_node != NULL) {
                 jobj_node->x40 = 9;
                 jobj_node = (ToyJObjNode*) jobj_node->x4;
@@ -4914,7 +4906,7 @@ void _Toy_8030E110(HSD_GObj* arg0)
                 _Toy_sbss_804D6E84 = HSD_CObjGetBottom(cobj);
                 _Toy_sbss_804D6E88 = HSD_CObjGetRight(cobj);
                 _Toy_sbss_804D6E8C = HSD_CObjGetLeft(cobj);
-                jobj_node = (ToyJObjNode*) Toy_sbss_804D6ED8->xC->x28;
+                jobj_node = Toy_sbss_804D6ED8->gobj2->hsd_obj;
                 while (jobj_node != NULL) {
                     jobj_node->x40 = 9;
                     jobj_node = (ToyJObjNode*) jobj_node->x4;
@@ -5974,73 +5966,73 @@ void Toy_80310660(s32 arg0)
             arg = 0;
             ty30->x58 = (void*) arg;
             if (ty30->x0C != NULL) {
-                HSD_GObjPLink_80390228(ty30->x0C);
+                HSD_GObjFree(ty30->x0C);
                 ty30->x0C = (void*) arg;
             }
         }
 
         if (*(void**) ty27 != NULL) {
-            HSD_GObjPLink_80390228(*(void**) ty27);
+            HSD_GObjFree(*(void**) ty27);
             *(void**) ty27 = NULL;
             *(void**) (ty27 + 0x8) = NULL;
             *(void**) (ty27 + 0x4) = NULL;
         }
 
         if (*(void**) ty26 != NULL) {
-            HSD_GObjPLink_80390228(*(void**) ty26);
+            HSD_GObjFree(*(void**) ty26);
             *(void**) ty26 = NULL;
         }
 
         if (ty28->x0 != NULL) {
-            HSD_GObjPLink_80390228(ty28->x0);
+            HSD_GObjFree(ty28->x0);
             ty28->x0 = NULL;
             ty28->x10 = NULL;
         }
 
         if (ty28->x4 != NULL) {
-            HSD_GObjProc_8038FED4(ty28->x4);
-            HSD_GObjPLink_80390228(ty28->x4);
+            HSD_GObjProc_RemoveAllProcs(ty28->x4);
+            HSD_GObjFree(ty28->x4);
             ty28->x4 = NULL;
         }
 
         if (ty28->x8 != NULL) {
-            HSD_GObjPLink_80390228(ty28->x8);
+            HSD_GObjFree(ty28->x8);
             ty28->x8 = NULL;
             HSD_FogSet(NULL);
         }
 
         if (ty30->x0C != NULL) {
-            HSD_GObjPLink_80390228(ty30->x0C);
+            HSD_GObjFree(ty30->x0C);
             ty30->x0C = NULL;
         }
 
         if (ty31[0] != NULL) {
-            HSD_GObjPLink_80390228(ty31[0]);
+            HSD_GObjFree(ty31[0]);
             ty31[0] = NULL;
         }
 
         if (ty31[1] != NULL) {
-            HSD_GObjPLink_80390228(ty31[1]);
+            HSD_GObjFree(ty31[1]);
             ty31[1] = NULL;
         }
 
         if (ty31[2] != NULL) {
-            HSD_GObjPLink_80390228(ty31[2]);
+            HSD_GObjFree(ty31[2]);
             ty31[2] = NULL;
         }
 
         if (ty31[3] != NULL) {
-            HSD_GObjPLink_80390228(ty31[3]);
+            HSD_GObjFree(ty31[3]);
             ty31[3] = NULL;
         }
 
         if (ty31[4] != NULL) {
-            HSD_GObjPLink_80390228(ty31[4]);
+            HSD_GObjFree(ty31[4]);
             ty31[4] = NULL;
         }
 
         if (ty31[5] != NULL) {
-            HSD_GObjPLink_80390228(ty31[5]);
+            HSD_GObjFree(ty31[5]);
             ty31[5] = NULL;
         }
     }
@@ -6144,7 +6136,7 @@ void _Toy_80310B48(HSD_GObj* gobj)
 
     if (buttons & HSD_PAD_B) {
         sfxBack();
-        HSD_GObjPLink_80390228(gobj);
+        HSD_GObjFree(gobj);
         editor->gobj = NULL;
         ((TyModeState*) Toy_804A284C)->x4 = 1;
         return;
@@ -6181,7 +6173,7 @@ void _Toy_80310B48(HSD_GObj* gobj)
         DevText_HideBackground(_Toy_sbss_804D6E98);
         DevText_HideText(_Toy_sbss_804D6E98);
         Toy_80310324();
-        HSD_GObjPLink_80390228(gobj);
+        HSD_GObjFree(gobj);
         editor->gobj = NULL;
         return;
     }

@@ -14,7 +14,7 @@
 #include <melee/cm/camera.h>
 #include <melee/cm/types.h>
 #include <melee/ft/ftlib.h>
-#include <melee/gm/gm_16AE.h>
+#include <melee/gm/gmvs.h>
 #include <melee/if/ifhazard.h>
 #include <melee/it/it_2725.h>
 #include <melee/it/item.h>
@@ -562,8 +562,11 @@ void grOnett_801E43E0(Ground_GObj* gobj)
 
 #ifdef MELEE_NATIVE
         // State zero has no selected car yet (index 4); it selects one below.
-        car_jobj = gp->u.onettcar.state_a ? gp->u.onettcar.car_jobjs[saved_car] : NULL;
-        car_jobj2 = gp->u.onettcar.state_a ? gp->u.onettcar.car_jobjs2[saved_car] : NULL;
+        car_jobj = gp->u.onettcar.state_a ? gp->u.onettcar.car_jobjs[saved_car]
+                                          : NULL;
+        car_jobj2 = gp->u.onettcar.state_a
+                        ? gp->u.onettcar.car_jobjs2[saved_car]
+                        : NULL;
 #else
         car_jobj = gp->u.onettcar.car_jobjs[saved_car];
         car_jobj2 = gp->u.onettcar.car_jobjs2[saved_car];
@@ -594,13 +597,13 @@ void grOnett_801E43E0(Ground_GObj* gobj)
         case 2:
             if (gp->u.onettcar.x108 != 0) {
                 int fighter_count = 0;
-                iter = HSD_GObj_Entities->fighters;
+                iter = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER];
                 while (iter != NULL) {
                     iter = iter->next;
                     fighter_count++;
                 }
                 gp->u.onettcar.x108 -= 1;
-                iter = HSD_GObj_Entities->fighters;
+                iter = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER];
                 while (iter != NULL) {
                     ftLib_80086644(iter, &pos);
                     if (pos.y <= 1.0f) {
@@ -669,7 +672,7 @@ void grOnett_801E43E0(Ground_GObj* gobj)
                 if (HSD_JObjGetTranslationX(car_jobj) <=
                     cam_z + yakumono_param->x64)
                 {
-                    iter = HSD_GObj_Entities->fighters;
+                    iter = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER];
                     while (iter != NULL) {
                         ftLib_80086644(iter, &pos);
                         if (pos.y <= 1.0f) {
@@ -964,11 +967,7 @@ DynamicModelDesc* grOnett_801E56FC(void)
     HSD_ASSERT(1319, archive);
     dat = archive->unk4;
     if (dat != NULL) {
-#ifdef MELEE_NATIVE
         return (DynamicModelDesc*) &dat->unk8[1];
-#else
-        return (DynamicModelDesc*) ((char*) dat->unk8 + 0x34);
-#endif
     }
     return NULL;
 }

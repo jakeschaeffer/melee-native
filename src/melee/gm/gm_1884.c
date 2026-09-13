@@ -4,8 +4,8 @@
 
 #include "gm_1601.h"
 #include "gm_1A36.h"
-#include "gm_1A45.h"
 #include "gm_unsplit.h"
+#include "gmscene.h"
 #include "types.h"
 #include <dolphin/pad.h>
 #include <melee/gr/stage.h>
@@ -425,7 +425,7 @@ void fn_80188EE8(HSD_GObj* gobj)
 
     PAD_STACK(8);
 
-    if (gm_801A45E8(2) != 0) {
+    if (gm_GetDbPauseFlag(2) != 0) {
         HSD_SisLib_803A6368(sub->text, 0x1E);
         HSD_JObjSetFlagsAll(sub->jobjs[3], JOBJ_HIDDEN);
     } else {
@@ -547,7 +547,7 @@ void fn_801891F4(void)
     buttons = gm_801A36C0((u8) lbl_80473700.mode);
     sub = &gm_80473814;
 
-    if (gm_801A45E8(2) != 0) {
+    if (gm_GetDbPauseFlag(2) != 0) {
         if (sub->x01 == 0) {
             fn_801651FC(0, 0);
             gm_801891F4_SetCpuType(0);
@@ -884,7 +884,7 @@ void gm_80189CDC(StartMeleeData* arg0)
 
     arg0->rules.match_kind = 0;
     arg0->rules.is_teams = 1;
-    arg0->rules.xB = -1;
+    arg0->rules.item_freq = -1;
     arg0->rules.x20 = 0xFFFFFFFFFFFFFFFFULL;
     arg0->rules.x5_0 = 1;
 

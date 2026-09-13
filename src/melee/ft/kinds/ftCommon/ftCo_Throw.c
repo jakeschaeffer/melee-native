@@ -143,13 +143,13 @@ void ftCo_800DD398(Fighter_GObj* gobj, FtMotionId msid, FtMotionId victim_msid,
     ftCommon_8007E2F4(fp, 0x1FF);
     ftCo_800DE3FC(fp->victim_gobj, victim_msid, anim_speed);
     switch (fp->kind) {
-    case FTKIND_KIRBY:
+    case Ft_Kind_Kirby:
         if (msid == 221) {
             Fighter* victim = GET_FIGHTER(fp->victim_gobj);
             fp->x2219_b2 = victim->x2219_b2 = 1;
         }
         break;
-    case FTKIND_SAMUS:
+    case Ft_Kind_Samus:
         ftSs_Init_CreateThrowGrappleBeam(gobj, msid, anim_speed);
         break;
     default:
@@ -174,9 +174,10 @@ void ftCo_800DD4B0(Fighter_GObj* gobj, FtMotionId msid)
     switch (msid) {
     case 222:
         switch (fp->kind) {
-        case FTKIND_GKOOPS:
-        case FTKIND_KOOPA:
-            if (victim->kind == FTKIND_PEACH || victim->kind == FTKIND_ZELDA) {
+        case Ft_Kind_GKoops:
+        case Ft_Kind_Koopa:
+            if (victim->kind == Ft_Kind_Peach || victim->kind == Ft_Kind_Zelda)
+            {
                 victim_msid = 243;
             }
         default:
@@ -270,7 +271,7 @@ void ftCo_800DD724(Fighter_GObj* gobj)
         Fighter_GObj* victim = fp->victim_gobj;
         ftCommon_8007E2F4(fp, 0);
         if (victim != NULL) {
-            pl_80040614(fp->player_id, fp->x221F_b4,
+            pl_80040614(fp->player_id, fp->is_sub_fighter,
                         GET_FIGHTER(victim)->grab_timer);
             ftCo_800DE2A8(gobj, victim);
             ftCo_800DE7C0(victim, gobj, fp->motion_id == 222);
@@ -284,7 +285,7 @@ void ftCo_800DD724(Fighter_GObj* gobj)
         if (fp->victim_gobj != NULL) {
             ftCo_800DE920(fp->victim_gobj, fp->cur_anim_frame);
         }
-        if (fp->kind == FTKIND_KIRBY && fp->motion_id == 221) {
+        if (fp->kind == Ft_Kind_Kirby && fp->motion_id == 221) {
             fp->x2219_b2 = 0;
             if (fp->victim_gobj != NULL) {
                 GET_FIGHTER(fp->victim_gobj)->x2219_b2 = 0;
@@ -438,7 +439,7 @@ void ftCo_ThrowHi_Coll(Fighter_GObj* gobj)
 void ftCo_ThrowHi_Cam(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    if (fp->kind == FTKIND_KIRBY && fp->motion_id == 221) {
+    if (fp->kind == Ft_Kind_Kirby && fp->motion_id == 221) {
         ftCamera_800762F4(gobj);
     } else {
         ftCamera_UpdateCameraBox(gobj);

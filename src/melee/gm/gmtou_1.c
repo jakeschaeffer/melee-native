@@ -1,12 +1,11 @@
-#include "gmtou_1.h"
 
 #include <placeholder.h>
 
 #include "forward.h"
 #include "gm_1601.h"
 #include "gm_1A3F.h"
-#include "gm_1A45.h"
 #include "gm_unsplit.h"
+#include "gmscene.h"
 #include "gmtou_0.h"
 #include "gmtoulib.h"
 #include "types.h"
@@ -1646,7 +1645,7 @@ void fn_8019A158(void)
         state.slot = local2;
     } else {
         for (i = 0; i < 4; i++) {
-            if (me->player_standings[i].slot_type != 3 &&
+            if (me->player_standings[i].pkind != 3 &&
                 me->player_standings[i].is_small_loser == 0)
             {
                 state.slot = i;

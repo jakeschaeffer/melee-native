@@ -16,7 +16,7 @@
 #include <melee/ft/ftlib.h>
 #include <melee/gm/gm_1601.h>
 #include <melee/gm/gm_16A2.h>
-#include <melee/gm/gm_16AE.h>
+#include <melee/gm/gmvs.h>
 #include <melee/gr/stage.h>
 #include <melee/it/it_26B1.h>
 #include <melee/pl/player.h>
@@ -1384,7 +1384,7 @@ static void fn_800262A0(HSD_GObj* gobj)
 
     if (ud->x10(gobj) == true) {
         if (gobj != NULL) {
-            HSD_GObjPLink_80390228(gobj);
+            HSD_GObjFree(gobj);
         }
         return;
     }
@@ -1399,7 +1399,7 @@ static void fn_800262A0(HSD_GObj* gobj)
          ud->end_frame == (ud->voice_id * 0)))
     {
         if (gobj != NULL) {
-            HSD_GObjPLink_80390228(gobj);
+            HSD_GObjFree(gobj);
         }
     } else {
         ud->current_frame += 1;
@@ -1440,7 +1440,7 @@ HSD_GObj* lbAudioAx_800263E8(float f1, HSD_GObj* owner, int arg2, int sfx_id,
         if (gobj != NULL) {
             userdata = HSD_ObjAlloc(&lbl_80433710);
             if (userdata == NULL) {
-                HSD_GObjPLink_80390228(gobj);
+                HSD_GObjFree(gobj);
                 gobj = NULL;
             } else {
                 GObj_InitUserData(gobj, HSD_GOBJ_CLASS_SOUND,
@@ -1480,7 +1480,7 @@ bool lbAudioAx_80026510(HSD_GObj* target)
     PAD_STACK(8);
 
     if (target != NULL) {
-        cur = ((HSD_GObj**) HSD_GObj_Entities)[GOBJ_TYPE_AUDIO_AX];
+        cur = HSD_GObjPLinkHead[GOBJ_TYPE_AUDIO_AX];
 
         while (cur != NULL) {
             lbAudioAx_UserData* ud = GET_SOUND(cur);
@@ -1491,7 +1491,7 @@ bool lbAudioAx_80026510(HSD_GObj* target)
                     AXDriverKeyOff(ud->voice_id);
                 }
                 if (cur != NULL) {
-                    HSD_GObjPLink_80390228(cur);
+                    HSD_GObjFree(cur);
                 }
                 count++;
             }
@@ -1508,7 +1508,7 @@ bool lbAudioAx_800265C4(HSD_GObj* target_obj, int voice)
 
     PAD_STACK(8);
 
-    cur = ((HSD_GObj**) HSD_GObj_Entities)[GOBJ_TYPE_AUDIO_AX];
+    cur = HSD_GObjPLinkHead[GOBJ_TYPE_AUDIO_AX];
 
     while (cur != NULL) {
         lbAudioAx_UserData* ud = GET_SOUND(cur);
@@ -1517,7 +1517,7 @@ bool lbAudioAx_800265C4(HSD_GObj* target_obj, int voice)
         {
             AXDriverKeyOff(ud->voice_id);
             if (cur != NULL) {
-                HSD_GObjPLink_80390228(cur);
+                HSD_GObjFree(cur);
             }
             return true;
         }
@@ -1690,7 +1690,7 @@ static bool fn_80026E58(int arg0)
 
 u64 lbAudioAx_80026E84(CharacterKind ckind)
 {
-    if (ckind < 0 || ckind >= CHKIND_MAX) {
+    if (ckind < 0 || ckind >= ChKind_Max) {
         return 0;
     }
     return lbl_803BB3C0[ckind].x8;
@@ -1873,7 +1873,7 @@ void lbAudioAx_8002785C(void)
     if (gm_8016B184()) {
         result = lbAudioAx_80026E84(Player_GetPlayerCharacter(0));
         for (i = 0; i < 3; i++) {
-            if (gm_80169370(i) != CHKIND_MAX) {
+            if (gm_80169370(i) != ChKind_Max) {
                 int opp = gm_80169370(i);
                 result |= lbAudioAx_80026E84(opp);
                 if (opp == 4) {

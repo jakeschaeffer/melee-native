@@ -9,7 +9,7 @@
 #include "types.h"
 #include <dolphin/gx/GXEnum.h>
 #include <dolphin/mtx.h>
-#include <melee/gm/gm_16AE.h>
+#include <melee/gm/gmvs.h>
 #include <melee/lb/lb_00F9.h>
 #include <sysdolphin/baselib/debug.h>
 #include <sysdolphin/baselib/gobj.h>
@@ -24,8 +24,8 @@
  * @copydoc ::grBattle_YakumonoParam::bg_curr_color_overlay
  */
 struct grBattle_YakumonoParam {
-    int bg_curr_color_overlay;
-    int bg_prev_color_overlay;
+    void* bg_curr_color_overlay;
+    void* bg_prev_color_overlay;
 };
 
 /* 219C98 */ static void grBattle_OnDemoInit(int);

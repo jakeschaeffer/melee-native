@@ -315,7 +315,7 @@ void mnDiagram2_HandleInput(HSD_GObj* gobj)
         sfxForward();
         saveDiagramSelection();
         mnDiagram2_ClearStatRows(mnDiagram2_804D6C18);
-        HSD_GObjPLink_80390228(gobj);
+        HSD_GObjFree(gobj);
         if (result & 0x40) {
             mnDiagram_Init(0, 0);
             return;
@@ -803,7 +803,7 @@ void mnDiagram2_OnAnimComplete(HSD_GObj* gobj)
     jobj = data->xC;
     table = mnDiagram2_803EEB60;
     if (mn_8022ED6C(jobj, table) >= table->end_frame) {
-        HSD_GObjPLink_80390228(gobj);
+        HSD_GObjFree(gobj);
     }
 }
 /// @brief Updates navigation arrow visibility based on scroll/selection state.
@@ -897,11 +897,11 @@ void mnDiagram2_Think(HSD_GObj* gobj)
     mode = src[0];
     if (mode != 0x1E || src[0x10] != 1) {
         if (mode == 0x1E) {
-            HSD_GObjPLink_80390228(gobj);
+            HSD_GObjFree(gobj);
         } else {
             HSD_GObjProc* proc;
 
-            HSD_GObjProc_8038FE24(HSD_GObj_804D7838);
+            HSD_GObjProc_RemoveProc(HSD_GObj_CurrentInvokedProc);
             proc = HSD_GObj_SetupProc(gobj, mnDiagram2_OnAnimComplete, 0);
             proc->flags_3 = HSD_GObj_804D783C;
             HSD_JObjSetFlagsAll(((HSD_JObj**) data)[4], JOBJ_HIDDEN);
@@ -959,7 +959,7 @@ void mnDiagram2_Create(int arg0)
     Diagram2* new_var;
     int j;
     int threshold;
-    mnDiagram_ArchiveData* archive = &mnDiagram_804A0834;
+    StaticModelDesc* archive = &MenMainConB2_Top;
     int scroll;
     int i;
     u32 is_name;
@@ -970,10 +970,11 @@ void mnDiagram2_Create(int arg0)
 
     gobj = GObj_Create(6, 7, 0x80);
     mnDiagram2_804D6C18 = gobj;
-    jobj = HSD_JObjLoadJoint(archive->x0);
+    jobj = HSD_JObjLoadJoint(archive->joint);
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
     GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 6, 0x80);
-    HSD_JObjAddAnimAll(jobj, archive->x4, archive->x8, archive->xC);
+    HSD_JObjAddAnimAll(jobj, archive->animjoint, archive->matanim_joint,
+                       archive->shapeanim_joint);
     HSD_JObjReqAnimAll(jobj, 0.0f);
 
     user_data = (Diagram2*) HSD_MemAlloc(sizeof(Diagram2));

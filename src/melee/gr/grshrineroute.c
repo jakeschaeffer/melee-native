@@ -29,10 +29,10 @@
 #include <sysdolphin/baselib/random.h>
 
 struct grShrineRoute_YakumonoParam {
-    int x0;
-    int x4;
-    int x8;
-    int xC;
+    void* x0;
+    void* x4;
+    void* x8;
+    void* xC;
     int x10;
     f32 x14;
     f32 x18;
@@ -893,7 +893,7 @@ void grShrineRoute_8020A100(Ground_GObj* arg) {}
 void grShrineRoute_8020A104(Ground_GObj* gobj)
 {
     Ground* gp = GET_GROUND(gobj);
-    HSD_GObj* lgobj = HSD_GObj_Entities->xC;
+    HSD_GObj* lgobj = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_LIGHT];
     HSD_LObj* lobj;
 
     while (lgobj) {

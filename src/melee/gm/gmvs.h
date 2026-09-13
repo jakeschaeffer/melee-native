@@ -5,12 +5,10 @@
 #include <melee/it/forward.h>
 #include <melee/mn/forward.h>
 
-#include <placeholder.h>
-
-/* 16AE38 */ lbl_8046B6A0_t* gm_16AE_GetUnkData_0(void);
-/* 16AE44 */ lbl_8046B6A0_t* gm_16AE_GetUnkData_1(void);
-/* 16AE50 */ struct StartMeleeRules* gm_GetRules(void);
-/* 16AE60 */ UNK_T fn_8016AE60(void);
+/* 16AE38 */ VsSceneController* gmVs_GetSceneController(void);
+/* 16AE44 */ VsSceneState* gmVs_GetSceneState(void);
+/* 16AE50 */ struct StartMeleeRules* gm_GetStartMeleeRules(void);
+/* 16AE60 */ struct lbl_8046B488_t* fn_8016AE60(void);
 /* 16AE80 */ bool gm_8016AE80(void);
 /* 16AE94 */ f32 gm_8016AE94(void);
 /* 16AEA4 */ u64 gm_8016AEA4(void);
@@ -52,7 +50,7 @@
 /* 16B388 */ void fn_8016B388(int arg0, int arg1);
 /* 16B3A0 */ bool gm_8016B3A0(void);
 /* 16B3D8 */ bool gm_8016B3D8(void);
-/* 16B41C */ bool gm_8016B41C(void);
+/* 16B41C */ bool gm_IsCurrently1PMode_inline(void);
 /* 16B498 */ bool gm_IsCurrently1PMode(void);
 /* 16B4BC */ bool fn_8016B4BC(void);
 /* 16B510 */ bool fn_8016B510(void);
@@ -61,7 +59,7 @@
 /* 16B6E8 */ void gm_8016B6E8(int, int);
 /* 16B728 */ u8 fn_8016B728(void);
 /* 16B738 */ void fn_8016B738(int);
-/* 16B774 */ struct lbl_8046B6A0_24C_t* gm_8016B774(void);
+/* 16B774 */ MatchEnd* gm_8016B774(void);
 /* 16B784 */ void fn_8016B784(void);
 /* 16B7B4 */ void fn_8016B7B4(int);
 /* 16B7F8 */ void fn_8016B7F8(void);
@@ -76,18 +74,45 @@
 /* 16C0C8 */ MatchOutcome gm_GetTeamBattleOutcome(void);
 /* 16C35C */ MatchOutcome gm_GetMatchOutcome(void);
 /* 16C46C */ void fn_8016C46C(int);
-/* 16C4F4 */ void fn_8016C4F4(struct lbl_8046B6A0_24C_t*);
+/* 16C4F4 */ void fn_8016C4F4(MatchEnd*);
 /* 16C5C0 */ int gm_8016C5C0(int pl_slot);
-/* 16C658 */ int gm_8016C658(int);
+/* 16C658 */ int gm_GetMatchEndPlayerScore(int);
 
 /// @todo should take Fighter_GObj*? See ftCo_800A53DC
 /* 16C6C0 */ /* static */ s32 gm_8016C6C0(Item_GObj*);
 /* 16C75C */ /* static */ int gm_8016C75C(HSD_GObj*);
 /* 16C7D0 */ void fn_8016C7D0(HSD_GObj*);
 /* 16C7F0 */ void fn_8016C7F0(void);
-/* 16CA68 */ void gm_DoPauseChecksAndRoutine(lbl_8046B6A0_t*, int);
-/* 16CBE8 */ void gm_DoUnpauseChecksAndRoutine(lbl_8046B6A0_t*, int);
-/* 16CD98 */ void fn_8016CD98(lbl_8046B6A0_t*);
+
+/**
+ * @brief Checks for pause input and runs the pause routine when unpaused.
+ *
+ * Runs when the match is not paused. Skipped while
+ * #VsSceneController::unpause_timer is non-zero, the HUD is disabled, or
+ * #StartMeleeRules::disable_pausing is set. On a successful pause, sets
+ * #VsSceneController::pause_timer to @c 0xA and optionally invokes
+ * #StartMeleeRules::on_pause_override or #gm_EnablePlayerPauseCamera.
+ *
+ * @param[in] arg0 Match state (#VsSceneController).
+ * @param[in] arg1 Pause context id passed to #gm_SetDbPauseFlag.
+ */
+/* 16CA68 */ void gm_DoPauseChecksAndRoutine(VsSceneController*, int);
+
+/**
+ * @brief Checks for unpause input and runs the unpause routine when paused.
+ *
+ * Runs when the match is paused. Skipped while #VsSceneController::pause_timer
+ * is non-zero, the HUD is disabled, or #StartMeleeRules::disable_pausing is
+ * set. Only the original pauser may unpause. On success, sets
+ * #VsSceneController::unpause_timer to @c 0xA and optionally invokes
+ * #StartMeleeRules::on_unpause_override or #Ground_EnableMatchCamera.
+ *
+ * @param[in] arg0 Match state (#VsSceneController).
+ * @param[in] arg1 Unpause context id passed to #gm_ClearDbPauseFlag.
+ */
+/* 16CBE8 */ void gm_DoUnpauseChecksAndRoutine(VsSceneController*, int);
+
+/* 16CD98 */ void fn_8016CD98(VsSceneController*);
 /* 16CF4C */ void fn_8016CF4C(int, MatchOutcome);
 /* 16CFE0 */ void fn_8016CFE0(void);
 /* 16D32C */ void gm_Scene_Training_OnFrame(void);

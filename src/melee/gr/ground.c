@@ -849,7 +849,7 @@ Ground_GObj* Ground_GetStageGObj(int map_id)
      */
     gp = alloc_user_data_ground();
     if (gp == NULL) {
-        HSD_GObjPLink_80390228(gobj);
+        HSD_GObjFree(gobj);
         return NULL;
     }
     GObj_InitUserData(gobj, 3, mem_free, gp);
@@ -891,7 +891,7 @@ Ground_GObj* Ground_GetStageGObj(int map_id)
         new_var = get_jobj_inline(phi_f0);
         HSD_JObjAddNext(temp_r23, new_var);
         if (new_var == NULL) {
-            HSD_GObjPLink_80390228(gobj);
+            HSD_GObjFree(gobj);
             OSReport("%s:%d: couldn t get jobj\n", __FILE__, 0x55D);
             return NULL;
         }
@@ -929,7 +929,7 @@ Ground_GObj* Ground_GetStageGObj(int map_id)
         temp_r3_11 = get_jobj_inline(phi_f0);
         HSD_JObjAddNext(new_var, temp_r3_11);
         if (temp_r3_11 == NULL) {
-            HSD_GObjPLink_80390228(gobj);
+            HSD_GObjFree(gobj);
             OSReport("%s:%d: couldn t get jobj\n", __FILE__, 0x598);
             return NULL;
         }
@@ -957,7 +957,7 @@ HSD_GObj* Ground_801C1A20(HSD_Joint* arg0, s32 arg1)
     }
     gp = alloc_user_data_ground();
     if (gp == NULL) {
-        HSD_GObjPLink_80390228(temp_r30);
+        HSD_GObjFree(temp_r30);
         return NULL;
     }
     GObj_InitUserData(temp_r30, 3, mem_free, gp);
@@ -981,7 +981,7 @@ HSD_GObj* Ground_801C1A20(HSD_Joint* arg0, s32 arg1)
     temp_r3_4 = get_jobj_inline(Ground_801C0498());
     HSD_JObjAddNext(temp_r29, temp_r3_4);
     if (temp_r3_4 == NULL) {
-        HSD_GObjPLink_80390228(temp_r30);
+        HSD_GObjFree(temp_r30);
         OSReport("%s:%d: couldn t get jobj\n", __FILE__, 0x5E8);
         return NULL;
     }
@@ -1384,7 +1384,7 @@ static bool Ground_801C24F8(StKind stkind, u32 arg1, s32* arg2)
                     }
                     break;
                 case 3:
-                    if (gm_IsCKindUnlocked(CKIND_MARS) &&
+                    if (gm_IsCKindUnlocked(CKind_Mars) &&
                         (phi_r30->x16 > HSD_Randi(RANDI_MAX) || temp_r25))
                     {
                         arg1 |= 2;
@@ -1393,7 +1393,7 @@ static bool Ground_801C24F8(StKind stkind, u32 arg1, s32* arg2)
                     }
                     break;
                 case 4:
-                    if (gm_IsCKindUnlocked(CKIND_CLINK) &&
+                    if (gm_IsCKindUnlocked(CKind_CLink) &&
                         (phi_r30->x16 > HSD_Randi(RANDI_MAX) || temp_r25))
                     {
                         arg1 |= 2;
@@ -2758,7 +2758,9 @@ light_selected:
 HSD_GObj* Ground_801C498C(void)
 {
     HSD_GObj* gobj;
-    for (gobj = HSD_GObj_Entities->xC; gobj != NULL; gobj = gobj->next) {
+    for (gobj = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_LIGHT]; gobj != NULL;
+         gobj = gobj->next)
+    {
         if (gobj->classifier == HSD_GOBJ_CLASS_GROUND) {
             break;
         }
@@ -2816,7 +2818,7 @@ void Ground_801C4A08(HSD_GObj* gobj)
         Ground_801C55AC(gp);
         if (gp->x18 != NULL) {
             removeStageGObj(gp->x18);
-            HSD_GObjPLink_80390228(gp->x18);
+            HSD_GObjFree(gp->x18);
         }
         if (gobj->hsd_obj != NULL && Ground_804D6950[map_id] == 0) {
             Ground_804D6950[map_id] = 1;
@@ -2828,7 +2830,7 @@ void Ground_801C4A08(HSD_GObj* gobj)
                             archive->unk4->unk8[map_id].unk0);
         }
     }
-    HSD_GObjPLink_80390228(gobj);
+    HSD_GObjFree(gobj);
 }
 
 void Ground_801C4B50(HSD_Spline* spline, Vec3* arg1, Vec3* result, f32 arg8)
@@ -3232,9 +3234,11 @@ s32 Ground_801C5840(void)
 
 #ifdef MUST_MATCH
 #pragma push
-#pragma global_optimizer off
+/// With propagation on, the single-use @c &stage_info is rematerialized at the
+/// store instead of being computed at the start of the branch and held in
+/// r31 across the two calls
+#pragma opt_propagation off
 #endif
-/// @todo Why is @c global_optimizer necessary?
 void Ground_801C5878(void)
 {
     PAD_STACK(8);

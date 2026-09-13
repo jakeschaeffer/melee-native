@@ -4,6 +4,7 @@
 #include <melee/pl/types.h>
 #include <melee/gm/types.h>
 #include <melee/gm/gmresultplayer.static.h>
+#include <melee/gr/grmutecity.static.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,8 +15,9 @@ _Static_assert(offsetof(ftCommonData,x6DC_colorsByPlayer)==0x6DC,"Common paramet
 _Static_assert(offsetof(ftCommonData,metal_armor)==0x6F0,"Common parameter numeric tail");
 _Static_assert(offsetof(ftCommonData,x808)==0x808,"Common parameter final vector");
 _Static_assert(sizeof(union CmdUnion)==4,"Serialized commands must stay four bytes");
-_Static_assert(offsetof(struct lbl_8046B6A0_24C_t,x58)==offsetof(struct MatchEnd,player_standings),"Results player overlay");
-_Static_assert(offsetof(struct lbl_8046B6A0_24C_t,x44C)==offsetof(struct MatchEnd,x44C),"Results bonus overlay");
+_Static_assert(sizeof(((grMc_CarEntry*)0)->x24)==sizeof(void*),"Mute City live item handle must preserve host pointers");
+_Static_assert(_Generic(((struct VsSceneState*)0)->x24C, struct MatchEnd: 1, default: 0),"Scene results use the actual MatchEnd type");
+_Static_assert(sizeof(((struct MatchEnd*)0)->x0)==sizeof(u32),"Results timer is not a host pointer");
 _Static_assert(offsetof(struct S_UNK_YOSHI2,x8_end_index)==sizeof(TempS),"Yoshi second visibility group");
 _Static_assert(offsetof(struct S_UNK_YOSHI2,xC_start_index)==sizeof(TempS)+offsetof(TempS,x4),"Yoshi second visibility indices");
 _Static_assert(sizeof(union ColorOverlay_x8_t)==4,"Color script cells must stay four bytes");

@@ -23,7 +23,7 @@
 #include <melee/cm/camera.h>
 #include <melee/ft/ftdevice.h>
 #include <melee/ft/ftlib.h>
-#include <melee/gm/gm_16AE.h>
+#include <melee/gm/gmvs.h>
 #include <melee/it/it_26B1.h>
 #include <melee/it/itdrop.h>
 #include <melee/it/ithitbox.h>
@@ -160,7 +160,7 @@ struct grCastle_YakumonoParam {
     /* 0x05A */ u8 pad_x5A[2];
     /* 0x05C */ grCastleParams_Entry entries[9];
     /* 0x110 */ f32 x110;
-    /* 0x114 */ s32 x114;
+    /* 0x114 */ void* x114;
     /* 0x118 */ f32 x118;
     /* 0x11C */ f32 x11C;
     /* 0x120 */ f32 x120;
@@ -1505,7 +1505,7 @@ static inline void grCastle_PickSatellite(Ground* gp, s32* wp)
             s32 random_idx = HSD_Randi(11);
             idx = random_idx;
         }
-        entity = HSD_GObj_Entities->x14;
+        entity = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_GROUND];
         {
             s32 want = targets.e[idx].map_id;
             for (; entity != NULL; entity = entity->next) {

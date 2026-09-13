@@ -1,4 +1,3 @@
-#include <Runtime/gx_port.h>
 #include "psdisp.h"
 
 #include <string.h>
@@ -14,6 +13,7 @@
 #include "state.h"
 #include "util.h"
 #include <dolphin/gx.h>
+#include <Runtime/gx_port.h>
 
 // MSL/math.h defines a non-IEEE FLT_EPSILON
 #undef FLT_EPSILON

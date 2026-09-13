@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @copydoc melee/mp/mplib.h
+ */
+
 #include "mplib.h"
 
 #include <Runtime/platform.h>
@@ -1657,19 +1662,15 @@ bool mpCheckFloor(float ax, float ay, float bx, float by, float y_offset,
             float x1_sp40;
             float y1_sp3C;
             float dist2;
-            int line_offset;
+            ssize_t line_offset;
         block_8:
             if (cb != NULL && !cb(gobj, line_r26 - groundCollLine)) {
                 continue;
             }
 
-#ifdef MELEE_NATIVE
-            line_offset = line_r26 - groundCollLine;
-            if (line_id_skip == line_offset)
-#else
-            if (line_id_skip ==
-                (line_offset = (s32) line_r26 - (s32) groundCollLine) / 8)
-#endif
+            if (line_id_skip == (line_offset = (intptr_t) line_r26 -
+                                               (intptr_t) groundCollLine) /
+                                    (s32) sizeof(CollLine))
             {
                 continue;
             }
@@ -1681,12 +1682,8 @@ bool mpCheckFloor(float ax, float ay, float bx, float by, float y_offset,
                 continue;
             }
 
-#ifdef MELEE_NATIVE
-            mpLib_8004ED5C(line_offset, &x0_sp48, &y0_sp44, &x1_sp40,
-#else
-            mpLib_8004ED5C(line_offset / 8, &x0_sp48, &y0_sp44, &x1_sp40,
-#endif
-                           &y1_sp3C);
+            mpLib_8004ED5C(line_offset / (s32) sizeof(CollLine), &x0_sp48,
+                           &y0_sp44, &x1_sp40, &y1_sp3C);
             y0_sp44 += y_offset;
             y1_sp3C += y_offset;
             if (ABS(y0_sp44 - y1_sp3C) > 0.0001) {
@@ -6365,7 +6362,7 @@ void mpLib_DrawSnapping(void)
     bool var_r31;
 
     var_r31 = false;
-    ft_r27 = HSD_GObj_Entities->fighters;
+    ft_r27 = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER];
     if (ft_r27 != NULL) {
         Mtx spDC;
         PAD_STACK(0x30);
@@ -6432,7 +6429,7 @@ void mpLib_DrawSnapping(void)
         }
     }
 
-    if ((item_r28 = HSD_GObj_Entities->items) != NULL) {
+    if ((item_r28 = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM]) != NULL) {
         if (!var_r31) {
             Mtx sp7C;
             PAD_STACK(0x34);

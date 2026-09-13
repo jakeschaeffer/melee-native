@@ -57,7 +57,7 @@ struct grVenom_YakumonoParam {
     f32 x2C;
     char x30[0x34 - 0x30];
     f32 x34;
-    s32 x38;
+    void* x38;
 };
 
 static grVe_Data grVe_803E5348 = {
@@ -538,7 +538,7 @@ void grVenom_80203DD0(void)
     HSD_GObj* gobj;
     HSD_LObj* lobj;
 
-    gobj = HSD_GObj_Entities->xC;
+    gobj = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_LIGHT];
     while (gobj != NULL) {
         if (HSD_GObjGetClassifier(gobj) == 0xC) {
             lobj = GET_LOBJ(gobj);

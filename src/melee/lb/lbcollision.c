@@ -1,4 +1,3 @@
-#include <Runtime/gx_port.h>
 #include "lbcollision.h"
 
 #include <Runtime/platform.h>
@@ -14,6 +13,7 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <melee/ft/types.h>
+#include <Runtime/gx_port.h>
 #include <sysdolphin/baselib/cobj.h>
 #include <sysdolphin/baselib/jobj.h>
 #include <sysdolphin/baselib/mtx.h>

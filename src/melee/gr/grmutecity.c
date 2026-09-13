@@ -339,12 +339,13 @@ StageData grMc_StageData = {
 };
 
 struct grMc_YakumonoParam {
+#ifdef MELEE_NATIVE
     int x0;
-    #ifdef MELEE_NATIVE
     s32 x4;
     s32 x8;
     s32 xC;
 #else
+    void* x0;
     void* x4;
     DynamicsDesc* x8;
     DynamicsDesc* xC;
@@ -900,7 +901,8 @@ void grMuteCity_801F04B8(Ground_GObj* gobj)
             Ground_801C39B0(gp->u.mutecity.x130);
             break;
         case 21:
-            grMaterial_801C9604(gobj, GR_MATERIAL_SCRIPT(yakumono_param->x0), 0);
+            grMaterial_801C9604(gobj, GR_MATERIAL_SCRIPT(yakumono_param->x0),
+                                0);
             break;
         case 20:
             un_802FD604(entry->param);
@@ -929,7 +931,8 @@ void grMuteCity_801F04B8(Ground_GObj* gobj)
             HSD_GObj* bg_gobj = Ground_GetMapGObj(0x1D);
             if (bg_gobj != NULL) {
                 if (param != 0) {
-                    grMaterial_801C9604(bg_gobj, GR_MATERIAL_SCRIPT(yakumono_param->x4), 0);
+                    grMaterial_801C9604(
+                        bg_gobj, GR_MATERIAL_SCRIPT(yakumono_param->x4), 0);
                     if (gp->u.mutecity.x110 != NULL) {
                         HSD_LObjClearFlags(gp->u.mutecity.x110, LOBJ_HIDDEN);
                     }
@@ -1140,7 +1143,7 @@ void grMuteCity_801F106C(s32 i)
     } grMc_CarState;
     f32 max_x8;
     grMc_CarState* state = (grMc_CarState*) grMc_8049F440;
-    #ifdef MELEE_NATIVE
+#ifdef MELEE_NATIVE
     grMc_CarEntry* cars = grMc_8049F4B8;
 #else
     grMc_CarEntry* cars = state->cars;
@@ -1720,7 +1723,7 @@ void grMuteCity_801F1A34(HSD_GObj* arg0, Ground_GObj* arg1)
                             HSD_JObjSetTranslate(new_jobj, &spawn_pos);
                         }
                     }
-                    if ((u32) grMc_8049F4B8[car_idx].x24 != 0) {
+                    if (grMc_8049F4B8[car_idx].x24 != 0) {
                         grMaterial_801C8CDC(
                             (HSD_GObj*) grMc_8049F4B8[car_idx].x24);
                         grMc_8049F4B8[car_idx].x24 = 0;
@@ -1789,7 +1792,7 @@ void grMuteCity_801F1A34(HSD_GObj* arg0, Ground_GObj* arg1)
                 -100.0f < car_pos.z && car_pos.z < 50.0f)
             {
                 if (!grMc_8049F4B8[car_idx].x22_flags.b0 &&
-                    (u32) grMc_8049F4B8[car_idx].x24 == 0)
+                    grMc_8049F4B8[car_idx].x24 == 0)
                 {
                     Item_GObj* item_gobj = grMaterial_801C8CFC(
                         0, 2, car_gp, jobj, grMuteCity_801F1A0C,
@@ -1798,11 +1801,11 @@ void grMuteCity_801F1A34(HSD_GObj* arg0, Ground_GObj* arg1)
                         grMaterial_801C8DE0(item_gobj, 0.0f, 0.0f, -12.0f,
                                             0.0f, 0.0f, 2.0f, 15.0f);
                         grMaterial_801C8E08(item_gobj);
-                        grMc_8049F4B8[car_idx].x24 = (s32) item_gobj;
+                        grMc_8049F4B8[car_idx].x24 = (intptr_t) item_gobj;
                     }
                 }
             } else {
-                if ((u32) grMc_8049F4B8[car_idx].x24 != 0) {
+                if (grMc_8049F4B8[car_idx].x24 != 0) {
                     grMaterial_801C8CDC(
                         (HSD_GObj*) grMc_8049F4B8[car_idx].x24);
                     grMc_8049F4B8[car_idx].x24 = 0;
@@ -1833,11 +1836,7 @@ DynamicModelDesc* grMuteCity_801F28A8(void)
     HSD_ASSERT(2135, archive);
     dat = archive->unk4;
     if (dat != NULL) {
-#ifdef MELEE_NATIVE
         return (DynamicModelDesc*) &dat->unk8[38];
-#else
-        return (DynamicModelDesc*) ((char*) dat->unk8 + 0x7B8);
-#endif
     }
     return NULL;
 }
@@ -1857,7 +1856,7 @@ void grMuteCity_801F290C(Ground_GObj* gobj)
     HSD_LObj* lobj;
     if (grLib_801C96E8(gobj) != 0) {
         if (gp->u.mutecity2.xC4_flags.b0) {
-            lgobj = HSD_GObj_Entities->xC;
+            lgobj = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_LIGHT];
             while (lgobj != NULL) {
                 if (HSD_GObjGetClassifier(lgobj) == 0xC) {
                     break;
@@ -1882,7 +1881,7 @@ void grMuteCity_801F290C(Ground_GObj* gobj)
             gp->u.mutecity2.xC4_flags.b0 = 0;
         }
     } else {
-        lgobj = HSD_GObj_Entities->xC;
+        lgobj = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_LIGHT];
         while (lgobj != NULL) {
             if (HSD_GObjGetClassifier(lgobj) == 0xC) {
                 break;
@@ -1929,7 +1928,11 @@ s32 grMuteCity_801F2AB0(s32 arg0, HSD_JObj* arg1)
         if ((appsrt = gen->appsrt) == NULL) {
             appsrt = psAddGeneratorAppSRT_begin(gen, 0);
             if (appsrt == NULL) {
+#ifdef MUST_MATCH
                 return;
+#else
+                return 0;
+#endif
             }
         }
         appsrt->xA2 = 0;
@@ -1939,6 +1942,9 @@ s32 grMuteCity_801F2AB0(s32 arg0, HSD_JObj* arg1)
         gen->type |= PSAPPSRT_UNK_B11;
         appsrt->gp = gen;
     }
+#ifndef MUST_MATCH
+    return 0;
+#endif
 }
 
 /// @copydoc mpLib_JointCollisionCallback
@@ -1978,21 +1984,21 @@ DynamicsDesc* grMuteCity_801F2BBC(enum_t arg0)
 {
     if (grMc_804D69D4 == 1) {
         if (arg0 == 0x31) {
-            #ifdef MELEE_NATIVE
+#ifdef MELEE_NATIVE
             return MeleeNativeScriptPointer(&yakumono_param->x8);
 #else
             return yakumono_param->x8;
 #endif
         }
         if (arg0 == 0x35) {
-            #ifdef MELEE_NATIVE
+#ifdef MELEE_NATIVE
             return MeleeNativeScriptPointer(&yakumono_param->x8);
 #else
             return yakumono_param->x8;
 #endif
         }
         if ((u32) (arg0 - 0x32) <= 2) {
-            #ifdef MELEE_NATIVE
+#ifdef MELEE_NATIVE
             return MeleeNativeScriptPointer(&yakumono_param->xC);
 #else
             return yakumono_param->xC;

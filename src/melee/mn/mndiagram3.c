@@ -353,7 +353,7 @@ void mnDiagram3_HandleInput(HSD_GObj* gobj)
         gmMainLib_GetGameRules()->xD =
             ((Diagram3*) mnDiagram3_804D6C20->user_data)->is_name_mode;
         mnDiagram2_ClearDetailView(mnDiagram3_804D6C20);
-        HSD_GObjPLink_80390228(data->popup_gobj);
+        HSD_GObjFree(data->popup_gobj);
         data = mnDiagram3_804D6C20->user_data;
         mnDiagram3_ClearRowLabels(data);
         mn_80229894(0x1C, 0, 3);
@@ -364,10 +364,10 @@ void mnDiagram3_HandleInput(HSD_GObj* gobj)
         gmMainLib_GetGameRules()->xD =
             ((Diagram3*) mnDiagram3_804D6C20->user_data)->is_name_mode;
         mnDiagram2_ClearDetailView(mnDiagram3_804D6C20);
-        HSD_GObjPLink_80390228(data->popup_gobj);
+        HSD_GObjFree(data->popup_gobj);
         data = mnDiagram3_804D6C20->user_data;
         mnDiagram3_ClearRowLabels(data);
-        HSD_GObjPLink_80390228(gobj);
+        HSD_GObjFree(gobj);
         if (input & MenuInput_LTrigger) {
             mnDiagram2_Init();
             return;
@@ -513,7 +513,7 @@ void mnDiagram3_OnAnimComplete(HSD_GObj* gobj)
     table = &mnDiagram3_803EEC10;
     pad = 0;
     if (mn_8022ED6C(jobj, table) >= table->end_frame) {
-        HSD_GObjPLink_80390228(gobj);
+        HSD_GObjFree(gobj);
     }
 }
 
@@ -529,11 +529,11 @@ void mnDiagram3_Think(HSD_GObj* gobj)
     mode = src[0];
     if (mode != 0x1E || src[0x10] != 2) {
         if (mode == 0x1E) {
-            HSD_GObjPLink_80390228(gobj);
+            HSD_GObjFree(gobj);
         } else {
             HSD_GObjProc* proc;
 
-            HSD_GObjProc_8038FE24(HSD_GObj_804D7838);
+            HSD_GObjProc_RemoveProc(HSD_GObj_CurrentInvokedProc);
             proc = HSD_GObj_SetupProc(gobj, mnDiagram3_OnAnimComplete, 0);
             proc->flags_3 = HSD_GObj_804D783C;
             HSD_JObjSetFlagsAll(data->jobjs[2], JOBJ_HIDDEN);
@@ -575,14 +575,14 @@ void mnDiagram3_InitUserData(Diagram3* data, int arg1)
     data->row_icons[4] = NULL;
 }
 
-static inline HSD_JObj* mnDiagram3_LoadJoint(mnDiagram_ArchiveData* archive)
+static inline HSD_JObj* mnDiagram3_LoadJoint(StaticModelDesc* archive)
 {
-    return HSD_JObjLoadJoint(archive->x0);
+    return HSD_JObjLoadJoint(archive->joint);
 }
 
 void mnDiagram3_Create(int arg0)
 {
-    mnDiagram_ArchiveData* archive = &mnDiagram_804A0844;
+    StaticModelDesc* archive = &MenMainConB3_Top;
     register HSD_GObj* gobj;
     HSD_JObj* jobj;
     Diagram3* user_data;
@@ -593,7 +593,8 @@ void mnDiagram3_Create(int arg0)
     jobj = mnDiagram3_LoadJoint(archive);
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
     GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 6, 0x80);
-    HSD_JObjAddAnimAll(jobj, archive->x4, archive->x8, archive->xC);
+    HSD_JObjAddAnimAll(jobj, archive->animjoint, archive->matanim_joint,
+                       archive->shapeanim_joint);
     HSD_JObjReqAnimAll(jobj, 0.0f);
     HSD_JObjAnimAll(jobj);
 
@@ -690,7 +691,7 @@ static inline f32 mnDiagram3_GetPopupY(HSD_JObj* popup_row, f32 row_spacing,
 }
 
 static inline HSD_JObj* mnDiagram3_CreatePopup(Diagram3* data,
-                                               mnDiagram_ArchiveData* archive)
+                                               StaticModelDesc* archive)
 {
     HSD_GObj* popup;
     HSD_JObj* popup_jobj;
@@ -700,7 +701,8 @@ static inline HSD_JObj* mnDiagram3_CreatePopup(Diagram3* data,
     popup_jobj = mnDiagram3_LoadJoint(archive);
     HSD_GObjObject_80390A70(popup, HSD_GObj_JObjKind, popup_jobj);
     GObj_SetupGXLink(popup, HSD_GObj_JObjCallback, 4, 0x80);
-    HSD_JObjAddAnimAll(popup_jobj, archive->x4, archive->x8, archive->xC);
+    HSD_JObjAddAnimAll(popup_jobj, archive->animjoint, archive->matanim_joint,
+                       archive->shapeanim_joint);
     HSD_JObjReqAnimAll(popup_jobj, 0.0f);
     HSD_JObjAnimAll(popup_jobj);
     return popup_jobj;
@@ -711,7 +713,7 @@ void mnDiagram3_Init(void* arg0)
     void* new_var;
     Diagram3* data;
     HSD_GObj* gobj;
-    mnDiagram_ArchiveData* archive;
+    StaticModelDesc* archive;
     f32 row_spacing;
 
     {
@@ -726,7 +728,7 @@ void mnDiagram3_Init(void* arg0)
     mnDiagram3_Create((int) arg0);
 
     gobj = mnDiagram3_804D6C20;
-    archive = &mnDiagram_804A0854;
+    archive = &MenMainCursorB3_Top;
 
     {
         HSD_JObj* popup_jobj;

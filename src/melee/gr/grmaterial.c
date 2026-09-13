@@ -187,7 +187,8 @@ void grMaterial_801C8B68(HSD_JObj* jobj, int arg1)
                         }
                     }
                     if (var_r3) {
-                        HSD_IDInsertToTable(NULL, (uintptr_t) var_r30, var_r30);
+                        HSD_IDInsertToTable(NULL, (uintptr_t) var_r30,
+                                            var_r30);
                     }
                     if (!(jobj->flags & 0x1000)) {
                         var_r30 = HSD_JObjGetChild(jobj);
@@ -575,16 +576,12 @@ static inline Ground* grMaterial_801C9604_inline(HSD_GObj* arg0)
     return arg0->user_data;
 }
 
-#ifdef MELEE_NATIVE
-void grMaterial_801C9604(HSD_GObj* gobj, uintptr_t arg1, bool arg2)
-#else
-void grMaterial_801C9604(HSD_GObj* gobj, int arg1, bool arg2)
-#endif
+void grMaterial_801C9604(HSD_GObj* gobj, void* script, bool arg2)
 {
     Ground* gp = grMaterial_801C9604_inline(gobj);
     ColorOverlay* co = grMaterial_GetOverlay(gp);
     co->x4_pri = arg2;
-    co->x8_ptr1 = (union ColorOverlay_x8_t*) arg1;
+    co->x8_ptr1 = (union ColorOverlay_x8_t*) script;
     co->x0_timer = 0;
     co->xC_loop = 0;
     co->x7C_color_enable = co->x7C_flag2 = 0;

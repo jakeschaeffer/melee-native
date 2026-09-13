@@ -188,12 +188,8 @@ void Camera_Init(int n_subjects)
     game_camera.nearz = 0.1f;
     game_camera.farz = 16384.0f;
     game_camera.mode = CAMERA_STANDARD;
-#ifdef MELEE_NATIVE
     memzero(game_camera.quake_frames_left,
             offsetof(Camera, x2B0) - offsetof(Camera, quake_frames_left));
-#else
-    memzero(game_camera.quake_frames_left, 0x224);
-#endif
     game_camera.quake_scale = 1.0f;
     game_camera.x2BC = 1.0f;
     game_camera.x2C0 = -1.0f;
@@ -936,7 +932,7 @@ void Camera_ApplyQuake(CameraBounds* bounds, CameraTransformState* state)
     input_x *= 10.0f;
     input_y *= 10.0f;
 
-    if (gm_8016B41C() != 0) {
+    if (gm_IsCurrently1PMode_inline() != 0) {
         input_x *= cm_803BCCA0.xE8;
         input_y *= cm_803BCCA0.xE8;
     }
@@ -947,9 +943,11 @@ void Camera_ApplyQuake(CameraBounds* bounds, CameraTransformState* state)
         bounds->z_pos * tanf(0.5f * (0.017453292f * state->fov));
 #ifdef MELEE_NATIVE
     // Separate globals have no shared layout in the native executable.
-    viewport_x_scale = cm_803BCB64.aspect * half_view_height /
+    viewport_x_scale =
+        cm_803BCB64.aspect * half_view_height /
         (0.5f * (cm_803BCB64.viewport.xmax - cm_803BCB64.viewport.xmin));
-    viewport_y_scale = half_view_height /
+    viewport_y_scale =
+        half_view_height /
         (0.5f * (cm_803BCB64.viewport.ymax - cm_803BCB64.viewport.ymin));
 #else
     viewport_x_scale =
@@ -1009,7 +1007,7 @@ void Camera_UpdateQuakes(CameraBounds* bounds)
     if ((quakes_remaining != -1) && (game_camera.quake_gobj != NULL) &&
         (game_camera.quake_frames_left[QuakeKind_Loop] == 0))
     {
-        HSD_GObjPLink_80390228(game_camera.quake_gobj);
+        HSD_GObjFree(game_camera.quake_gobj);
         game_camera.quake_gobj = 0;
     }
 }
@@ -1406,7 +1404,7 @@ void Camera_8002B0E0(void)
     f32 var_f2;
     PAD_STACK(8);
 
-    if ((gm_8016B41C() != 0) && (game_camera.x2C0 > 0.0f)) {
+    if ((gm_IsCurrently1PMode_inline() != 0) && (game_camera.x2C0 > 0.0f)) {
         {
             s32 idx = Player_GetPlayerId(0) & 0xFF;
             var_f1 = HSD_PadCopyStatus[idx].nml_subStickY;
@@ -1456,7 +1454,7 @@ void Camera_8002B1F8(CameraTransformState* transform)
           (Camera_8002928C(subject) != 0) &&
           (Camera_80029124(&subject->bone_pos, 0) == CAM_BOUNDS_INSIDE) &&
           !ftLib_8008732C(temp_r3)) ||
-         ((Player_GetPlayerCharacter(1) == CHKIND_SANDBAG) &&
+         ((Player_GetPlayerCharacter(1) == ChKind_Sandbag) &&
           (temp_r3_2 = Player_GetEntity(1), ((temp_r3_2 == NULL) == 0)) &&
           (subject = ftLib_80086B74(temp_r3_2), ((subject == NULL) == 0)) &&
           (Camera_8002928C(subject) != 0) &&
@@ -4649,11 +4647,12 @@ void Camera_800313E0(HSD_GObj* gobj, u64 prios)
 void MeleeNativeTraceCamera(void)
 {
     CameraTransformState* t = &game_camera.transform;
-    OSReport("[camera-check] mode=%d near=%g far=%g eye=%g,%g,%g interest=%g,%g,%g fov=%g hidden=%d%d%d%d%d%d\n",
+    OSReport("[camera-check] mode=%d near=%g far=%g eye=%g,%g,%g "
+             "interest=%g,%g,%g fov=%g hidden=%d%d%d%d%d%d\n",
              game_camera.mode, game_camera.nearz, game_camera.farz,
-             t->position.x, t->position.y, t->position.z,
-             t->interest.x, t->interest.y, t->interest.z, t->fov,
-             game_camera.x398_b0, game_camera.x398_b1, game_camera.x398_b2,
-             game_camera.x398_b3, game_camera.x398_b4, game_camera.x398_b5);
+             t->position.x, t->position.y, t->position.z, t->interest.x,
+             t->interest.y, t->interest.z, t->fov, game_camera.x398_b0,
+             game_camera.x398_b1, game_camera.x398_b2, game_camera.x398_b3,
+             game_camera.x398_b4, game_camera.x398_b5);
 }
 #endif

@@ -25,34 +25,20 @@
 #include <sysdolphin/baselib/jobj.h>
 #include <sysdolphin/baselib/memory.h>
 
-/// @todo Split-derived data; types are inferred.
-void* mnDiagram_804A0814[4];
-void* mnDiagram_804A07E4[4];
-void* mnDiagram_804A07F4[4];
-void* mnDiagram_804A0804[4];
-void* mnDiagram_804A0824[4];
+StaticModelDesc MenMainCursorB1_Top;
+StaticModelDesc MenMainSubB1_Top;
+StaticModelDesc MenMainNmB_Top;
+StaticModelDesc MenMainFaceB_Top;
+StaticModelDesc MenMainConB1_Top;
 HSD_GObj* mnDiagram_804D6C10;
-mnDiagram_ArchiveData mnDiagram_804A0854;
-mnDiagram_ArchiveData mnDiagram_804A0844;
-mnDiagram_ArchiveData mnDiagram_804A0834;
+StaticModelDesc MenMainCursorB3_Top;
+StaticModelDesc MenMainConB3_Top;
+StaticModelDesc MenMainConB2_Top;
 
 #define GET_DIAGRAM(gobj) ((Diagram*) HSD_GObjGetUserData(gobj))
 
-/// Sorted fighter indices array (25 fighters + padding)
-typedef struct mnDiagram_804A0750_t {
-    u8 sorted_fighters[SELKIND_COUNT];
-    u8 pad_19[3];
-} mnDiagram_804A0750_t;
-ASSERT_SIZE(mnDiagram_804A0750_t, 0x1C);
-
-/// Sorted name indices array (120 names)
-typedef struct mnDiagram_804A076C_t {
-    u8 sorted_names[0x78];
-} mnDiagram_804A076C_t;
-ASSERT_SIZE(mnDiagram_804A076C_t, 0x78);
-
 /// Archive asset pointers struct (for mnDiagram_Init)
-/// Cast from &mnDiagram_804A0750 to access asset arrays
+/// Cast from &mnDiagram_FighterDisplayOrder to access asset arrays
 typedef struct mnDiagram_Assets {
     /* 0x00 */ u8 sorted_fighters[0x19];
     /* 0x19 */ u8 pad_19[3];
@@ -87,9 +73,8 @@ typedef struct mnDiagram_PopupAnimTableHead {
     /* 0x00 */ Point3d points[3];
 } mnDiagram_PopupAnimTableHead;
 
-/// BSS variables - sorted player arrays
-mnDiagram_804A0750_t mnDiagram_804A0750;
-mnDiagram_804A076C_t mnDiagram_804A076C;
+u8 mnDiagram_FighterDisplayOrder[0x1C];
+u8 mnDiagram_NameDisplayOrder[0x78];
 
 static mnDiagram_PopupAnimTableHead mnDiagram_803EE728 = {
     {
@@ -139,7 +124,7 @@ char mnDiagram_804D4FA4[1] = "";
 /// @return Fighter ID
 u8 mnDiagram_GetFighterByIndex(int idx)
 {
-    return mnDiagram_804A0750.sorted_fighters[idx];
+    return mnDiagram_FighterDisplayOrder[idx];
 }
 
 /// @brief Gets the name ID at the given sorted index.
@@ -147,7 +132,7 @@ u8 mnDiagram_GetFighterByIndex(int idx)
 /// @return Name ID
 u8 mnDiagram_GetNameByIndex(int idx)
 {
-    return mnDiagram_804A076C.sorted_names[idx];
+    return mnDiagram_NameDisplayOrder[idx];
 }
 
 /// @brief Checks if a distance stat exceeds 1 mile (display cap).
@@ -503,7 +488,7 @@ u8 mnDiagram_GetPrevFighterIndex(s32 idx)
     u8* ptr;
     s32 original;
 
-    ptr = mnDiagram_804A0750.sorted_fighters + idx;
+    ptr = mnDiagram_FighterDisplayOrder + idx;
     original = idx;
 
     do {
@@ -522,7 +507,7 @@ u8 mnDiagram_GetNextFighterIndex(s32 idx)
     u8* ptr;
     s32 original;
 
-    ptr = mnDiagram_804A0750.sorted_fighters + idx;
+    ptr = mnDiagram_FighterDisplayOrder + idx;
     original = idx;
 
     do {
@@ -718,7 +703,7 @@ u8 mnDiagram_GetLeastPlayedFighter(u8 name_idx)
 void mnDiagram_SortFightersByKOs(void)
 {
     u32 totals[SELKIND_COUNT];
-    u8* dst = mnDiagram_804A0750.sorted_fighters;
+    u8* dst = mnDiagram_FighterDisplayOrder;
     u8* dst_iter;
     u8* candidate;
     int i, j;
@@ -740,10 +725,10 @@ void mnDiagram_SortFightersByKOs(void)
         max_idx = i;
         for (; j < SELKIND_COUNT; candidate++, j++) {
             if (mn_IsFighterUnlocked(*candidate) != 0) {
-                if ((totals[mnDiagram_804A0750.sorted_fighters[max_idx]] <
+                if ((totals[mnDiagram_FighterDisplayOrder[max_idx]] <
                      totals[*candidate]) ||
                     ((mn_IsFighterUnlocked(
-                          mnDiagram_804A0750.sorted_fighters[max_idx]) == 0) &&
+                          mnDiagram_FighterDisplayOrder[max_idx]) == 0) &&
                      (mn_IsFighterUnlocked(*candidate) != 0)))
                 {
                     max_idx = j;
@@ -751,13 +736,13 @@ void mnDiagram_SortFightersByKOs(void)
             }
         }
         if (max_idx != i) {
-            u8 temp = mnDiagram_804A0750.sorted_fighters[max_idx];
+            u8 temp = mnDiagram_FighterDisplayOrder[max_idx];
             while (max_idx > i) {
-                mnDiagram_804A0750.sorted_fighters[max_idx] =
-                    mnDiagram_804A0750.sorted_fighters[max_idx - 1];
+                mnDiagram_FighterDisplayOrder[max_idx] =
+                    mnDiagram_FighterDisplayOrder[max_idx - 1];
                 max_idx--;
             }
-            mnDiagram_804A0750.sorted_fighters[i] = temp;
+            mnDiagram_FighterDisplayOrder[i] = temp;
         }
     }
 }
@@ -781,7 +766,8 @@ void mnDiagram_SortNamesByKOs(void)
     int max_idx;
     u8* dst_iter;
     int i;
-    mnDiagram_Assets* assets = (mnDiagram_Assets*) &mnDiagram_804A0750;
+    mnDiagram_Assets* assets =
+        (mnDiagram_Assets*) &mnDiagram_FighterDisplayOrder;
     u8* dst = assets->sorted_names;
     u32* tp;
     u8* candidate;
@@ -798,14 +784,13 @@ void mnDiagram_SortNamesByKOs(void)
 
     for (i = 0; i < 0x78; i++) {
         j = i;
-        candidate = &mnDiagram_804A076C.sorted_names[++j];
+        candidate = &mnDiagram_NameDisplayOrder[++j];
         max_idx = i;
         for (; j < 0x78; candidate++, j++) {
             if ((GetNameText(*candidate) != NULL) &&
-                ((totals[mnDiagram_804A076C.sorted_names[max_idx]] <
+                ((totals[mnDiagram_NameDisplayOrder[max_idx]] <
                   totals[*candidate]) ||
-                 ((GetNameText(
-                       (0, mnDiagram_804A076C.sorted_names[max_idx])) ==
+                 ((GetNameText((0, mnDiagram_NameDisplayOrder[max_idx])) ==
                    NULL) &&
                   (GetNameText(*candidate) != NULL))))
             {
@@ -814,7 +799,7 @@ void mnDiagram_SortNamesByKOs(void)
         }
         if (max_idx != i) {
             u8* p = &assets->sorted_fighters[max_idx];
-            u8 temp = *(p += sizeof(mnDiagram_804A0750_t));
+            u8 temp = *(p += sizeof(mnDiagram_FighterDisplayOrder));
             while (max_idx > i) {
                 *p = *(p - 1);
                 p--;
@@ -855,11 +840,10 @@ void mnDiagram_PopupInputProc(HSD_GObj* gobj)
     u64 input = Menu_GetAllInputs();
     if ((u32) input & MenuInput_Back) {
         sfxBack();
-        HSD_GObjProc_8038FE24(HSD_GObj_804D7838);
-        proc = HSD_GObj_SetupProc(
-            gobj, (void (*)(HSD_GObj*)) mnDiagram_InputProc, 0);
+        HSD_GObjProc_RemoveProc(HSD_GObj_CurrentInvokedProc);
+        proc = HSD_GObj_SetupProc(gobj, mnDiagram_InputProc, 0);
         proc->flags_3 = HSD_GObj_804D783C;
-        HSD_GObjPLink_80390228(data->popup_gobj);
+        HSD_GObjFree(data->popup_gobj);
         data->popup_gobj = NULL;
     }
 }
@@ -1277,7 +1261,7 @@ void mnDiagram_InputProc(HSD_GObj* gobj)
     s32 i;
     u16* selection;
     s16 new_var;
-    u8* sorted = mnDiagram_804A0750.sorted_fighters;
+    u8* sorted = mnDiagram_FighterDisplayOrder;
     Diagram* data = mnDiagram_GetCurrentDiagramData();
     u32 input = mn_80229624(4);
     s32 count;
@@ -1304,10 +1288,9 @@ void mnDiagram_InputProc(HSD_GObj* gobj)
     count2 = 0;
     if (input & MenuInput_Confirm) {
         sfxForward();
-        HSD_GObjProc_8038FE24(HSD_GObj_804D7838);
+        HSD_GObjProc_RemoveProc(HSD_GObj_CurrentInvokedProc);
         i = 0;
-        proc = HSD_GObj_SetupProc(
-            gobj, (void (*)(HSD_GObj*)) mnDiagram_PopupInputProc, i);
+        proc = HSD_GObj_SetupProc(gobj, mnDiagram_PopupInputProc, i);
         proc->flags_3 = HSD_GObj_804D783C;
         if (data->is_name_mode != 0) {
             col = mn_804A04F0.hovered_selection;
@@ -1354,7 +1337,7 @@ void mnDiagram_InputProc(HSD_GObj* gobj)
             gmMainLib_GetGameRules()->unk_x10 = (u8) (d->name_cursor_pos >> 8);
             gmMainLib_GetGameRules()->x11 = (u8) d->name_cursor_pos;
             gmMainLib_GetGameRules()->xD = d->is_name_mode;
-            HSD_GObjPLink_80390228(gobj);
+            HSD_GObjFree(gobj);
             if (input & MenuInput_LTrigger) {
                 mnDiagram3_Init(0L);
                 return;
@@ -1639,9 +1622,9 @@ static inline Vec3* mnDiagram_PopupAnimProc_Inline(mnDiagram_AnimTable* arg0,
     return &arg0->points[arg1];
 }
 
-void mnDiagram_PopupAnimProc(void* arg0)
+void mnDiagram_PopupAnimProc(HSD_GObj* arg0)
 {
-    mnDiagram_PopupData* data = ((HSD_GObj*) arg0)->user_data;
+    mnDiagram_PopupData* data = arg0->user_data;
     HSD_Text* text;
     mnDiagram_AnimTable* tbl = GET_DIAGRAM_ANIM_TABLE();
     Vec3 pos;
@@ -1740,7 +1723,7 @@ void mnDiagram_PopupAnimProc(void* arg0)
     text->default_alignment = 1;
 
     if (anim_frame == tbl->cursor_anim.end_frame) {
-        HSD_GObjProc_8038FE24(HSD_GObj_804D7838);
+        HSD_GObjProc_RemoveProc(HSD_GObj_CurrentInvokedProc);
     }
 }
 
@@ -1755,10 +1738,10 @@ static inline void mnDiagram_FormatPopupNumber(char* buf, u32 val)
     buf[digit_count] = *mnDiagram_804D4FA4;
 }
 
-void mnDiagram_CreatePopupTexts(void* arg0, s32 selkind_or_nametag_slot_id,
+void mnDiagram_CreatePopupTexts(HSD_GObj* arg0, s32 selkind_or_nametag_slot_id,
                                 s32 arg2, s32 use_nametag)
 {
-    mnDiagram_PopupData* data = ((HSD_GObj*) arg0)->user_data;
+    mnDiagram_PopupData* data = arg0->user_data;
     float new_var;
     Point3d pos;
     char buf[8];
@@ -1924,22 +1907,23 @@ void mnDiagram_CreatePopup(s32 arg0, s32 arg1, s32 use_nametag)
 {
     int i;
     mnDiagram_AnimTable* tbl;
-    void** joint_data;
+    StaticModelDesc* model;
     Diagram* data;
     HSD_GObj* gobj;
     HSD_JObj* jobj;
     mnDiagram_PopupData* user_data;
 
     tbl = GET_DIAGRAM_ANIM_TABLE();
-    joint_data = mnDiagram_804A07E4;
+    model = &MenMainSubB1_Top;
     data = GET_DIAGRAM(mnDiagram_804D6C10);
 
     gobj = GObj_Create(6, 7, 0x80);
     data->popup_gobj = gobj;
-    jobj = HSD_JObjLoadJoint(joint_data[0]);
+    jobj = HSD_JObjLoadJoint(model->joint);
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
     GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 6, 0x80);
-    HSD_JObjAddAnimAll(jobj, joint_data[1], joint_data[2], joint_data[3]);
+    HSD_JObjAddAnimAll(jobj, model->animjoint, model->matanim_joint,
+                       model->shapeanim_joint);
     HSD_JObjReqAnimAll(jobj, 0.0f);
     HSD_JObjAnimAll(jobj);
 
@@ -1960,7 +1944,7 @@ void mnDiagram_CreatePopup(s32 arg0, s32 arg1, s32 use_nametag)
         lb_80011E24(jobj, &user_data->jobjs[i], i, -1);
     }
 
-    HSD_GObj_SetupProc(gobj, (void (*)(HSD_GObj*)) mnDiagram_PopupAnimProc, 0);
+    HSD_GObj_SetupProc(gobj, mnDiagram_PopupAnimProc, 0);
     mnDiagram_CreatePopupTexts(gobj, arg0, arg1, use_nametag);
 
     if (use_nametag != 0) {
@@ -2011,7 +1995,7 @@ static inline HSD_JObj* mnDiagram_GetJObjChild(HSD_JObj* jobj)
     return jobj->child;
 }
 
-void mnDiagram_ClearGrid(void* arg0)
+void mnDiagram_ClearGrid(HSD_GObj* arg0)
 {
     mnDiagram_MainOverlay* data = mnDiagram_GetUserData(arg0);
     HSD_JObj* child;
@@ -2069,7 +2053,7 @@ void mnDiagram_UpdateScrollArrows(HSD_GObj* gobj)
     u8* ptr;
     s32 count;
     s32 i;
-    u8* sorted = mnDiagram_804A0750.sorted_fighters;
+    u8* sorted = mnDiagram_FighterDisplayOrder;
     s32 result;
     s32 name_count;
     HSD_JObj* jobj2;
@@ -2199,7 +2183,7 @@ void mnDiagram_ExitAnimProc(HSD_GObj* gobj)
     jobj = data->jobj;
     table = mnDiagram_PopupExitAnimFrames;
     if (mn_8022ED6C(jobj, (AnimLoopSettings*) table) >= table[1]) {
-        HSD_GObjPLink_80390228(gobj);
+        HSD_GObjFree(gobj);
     }
 }
 
@@ -2208,23 +2192,23 @@ void mnDiagram_ExitAnimProc(HSD_GObj* gobj)
 ///          Hides horizontal arrows if count <= 10 (fits in visible columns).
 /// @param gobj The diagram GObj containing arrow JObjs in user_data.
 /// @param count Number of entries (fighters or names) to display.
-void mnDiagram_UpdateScrollArrowVisibility(void* gobj, int count)
+void mnDiagram_UpdateScrollArrowVisibility(HSD_GObj* gobj, int count)
 {
-    void* data = ((HSD_GObj*) gobj)->user_data;
+    Diagram* data = gobj->user_data;
     PAD_STACK(8);
     if (count <= 7) {
-        HSD_JObjSetFlagsAll(((HSD_JObj**) data)[7], JOBJ_HIDDEN);
-        HSD_JObjSetFlagsAll(((HSD_JObj**) data)[8], JOBJ_HIDDEN);
+        HSD_JObjSetFlagsAll(data->jobjs[5], JOBJ_HIDDEN);
+        HSD_JObjSetFlagsAll(data->jobjs[6], JOBJ_HIDDEN);
     } else {
-        HSD_JObjClearFlagsAll(((HSD_JObj**) data)[7], JOBJ_HIDDEN);
-        HSD_JObjClearFlagsAll(((HSD_JObj**) data)[8], JOBJ_HIDDEN);
+        HSD_JObjClearFlagsAll(data->jobjs[5], JOBJ_HIDDEN);
+        HSD_JObjClearFlagsAll(data->jobjs[6], JOBJ_HIDDEN);
     }
     if (count <= 10) {
-        HSD_JObjSetFlagsAll(((HSD_JObj**) data)[6], JOBJ_HIDDEN);
-        HSD_JObjSetFlagsAll(((HSD_JObj**) data)[5], JOBJ_HIDDEN);
+        HSD_JObjSetFlagsAll(data->jobjs[4], JOBJ_HIDDEN);
+        HSD_JObjSetFlagsAll(data->jobjs[3], JOBJ_HIDDEN);
     } else {
-        HSD_JObjClearFlagsAll(((HSD_JObj**) data)[6], JOBJ_HIDDEN);
-        HSD_JObjClearFlagsAll(((HSD_JObj**) data)[5], JOBJ_HIDDEN);
+        HSD_JObjClearFlagsAll(data->jobjs[4], JOBJ_HIDDEN);
+        HSD_JObjClearFlagsAll(data->jobjs[3], JOBJ_HIDDEN);
     }
 }
 
@@ -2238,10 +2222,10 @@ void mnDiagram_OnFrame(HSD_GObj* gobj)
     if ((mn_804A04F0.cur_menu != 0x1E) || (mn_804A04F0.x10 != 0)) {
         if (mn_804A04F0.cur_menu == 0x1E) {
             mnDiagram_ClearGrid(gobj);
-            HSD_GObjPLink_80390228(gobj);
+            HSD_GObjFree(gobj);
             return;
         }
-        HSD_GObjProc_8038FE24(HSD_GObj_804D7838);
+        HSD_GObjProc_RemoveProc(HSD_GObj_CurrentInvokedProc);
         proc = HSD_GObj_SetupProc(gobj, mnDiagram_ExitAnimProc, 0);
         proc->flags_3 = HSD_GObj_804D783C;
         HSD_JObjSetFlagsAll(data->jobjs[2], JOBJ_HIDDEN);
@@ -2299,18 +2283,18 @@ void mnDiagram_OnFrame(HSD_GObj* gobj)
             }
             data2 = gobj->user_data;
             if (count <= 7) {
-                HSD_JObjSetFlagsAll(((HSD_JObj**) data2)[7], JOBJ_HIDDEN);
-                HSD_JObjSetFlagsAll(((HSD_JObj**) data2)[8], JOBJ_HIDDEN);
+                HSD_JObjSetFlagsAll(data2->jobjs[5], JOBJ_HIDDEN);
+                HSD_JObjSetFlagsAll(data2->jobjs[6], JOBJ_HIDDEN);
             } else {
-                HSD_JObjClearFlagsAll(((HSD_JObj**) data2)[7], JOBJ_HIDDEN);
-                HSD_JObjClearFlagsAll(((HSD_JObj**) data2)[8], JOBJ_HIDDEN);
+                HSD_JObjClearFlagsAll(data2->jobjs[5], JOBJ_HIDDEN);
+                HSD_JObjClearFlagsAll(data2->jobjs[6], JOBJ_HIDDEN);
             }
             if (count <= 10) {
-                HSD_JObjSetFlagsAll(((HSD_JObj**) data2)[6], JOBJ_HIDDEN);
-                HSD_JObjSetFlagsAll(((HSD_JObj**) data2)[5], JOBJ_HIDDEN);
+                HSD_JObjSetFlagsAll(data2->jobjs[4], JOBJ_HIDDEN);
+                HSD_JObjSetFlagsAll(data2->jobjs[3], JOBJ_HIDDEN);
             } else {
-                HSD_JObjClearFlagsAll(((HSD_JObj**) data2)[6], JOBJ_HIDDEN);
-                HSD_JObjClearFlagsAll(((HSD_JObj**) data2)[5], JOBJ_HIDDEN);
+                HSD_JObjClearFlagsAll(data2->jobjs[4], JOBJ_HIDDEN);
+                HSD_JObjClearFlagsAll(data2->jobjs[3], JOBJ_HIDDEN);
             }
         } else {
             HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN);
@@ -2319,14 +2303,14 @@ void mnDiagram_OnFrame(HSD_GObj* gobj)
     mnDiagram_UpdateScrollArrows(gobj);
 }
 
-void mnDiagram_DrawCellValue(void* arg0, u8 arg1, u8 arg2, int arg3)
+void mnDiagram_DrawCellValue(HSD_GObj* arg0, u8 arg1, u8 arg2, int arg3)
 {
     Diagram* data_alias;
     f32 row_offset_adj;
     HSD_JObj* jobj;
     HSD_JObj* jobj2;
     Diagram* data;
-    void** joint_data;
+    StaticModelDesc* model;
     s32 digit_count;
     s32 digit;
     s32 i;
@@ -2340,7 +2324,7 @@ void mnDiagram_DrawCellValue(void* arg0, u8 arg1, u8 arg2, int arg3)
     u8 row = arg2;
     f32 y_offset;
 
-    data = ((HSD_GObj*) arg0)->user_data;
+    data = arg0->user_data;
     data_alias = data;
 
     jobj = data->jobjs[11];
@@ -2367,11 +2351,12 @@ void mnDiagram_DrawCellValue(void* arg0, u8 arg1, u8 arg2, int arg3)
     (void) col_offset;
     row_offset_adj = row_offset - 0.4f;
 
-    joint_data = mnDiagram_804A07F4;
+    model = &MenMainNmB_Top;
     for (i = 0; i < digit_count; i++) {
         digit = mn_GetDigitAt(arg3, i);
-        jobj = HSD_JObjLoadJoint(joint_data[0]);
-        HSD_JObjAddAnimAll(jobj, joint_data[1], joint_data[2], joint_data[3]);
+        jobj = HSD_JObjLoadJoint(model->joint);
+        HSD_JObjAddAnimAll(jobj, model->animjoint, model->matanim_joint,
+                           model->shapeanim_joint);
         base = (f32) digit;
         HSD_JObjReqAnimAll(jobj, base);
         HSD_JObjAnimAll(jobj);
@@ -2396,7 +2381,7 @@ static inline int mnDiagram_GetFighterPairKOs(u8 fighter, u8 opponent)
     return GetPersistentFighterData(kind)->fighter_kos[opponent];
 }
 
-void mnDiagram_DrawGridValues(void* arg0, s32 row_start, s32 col_start,
+void mnDiagram_DrawGridValues(HSD_GObj* arg0, s32 row_start, s32 col_start,
                               u8 arg3)
 {
     s32 name_col;
@@ -2514,10 +2499,10 @@ static inline void mnDiagram_TextSetPos(HSD_Text* text, f32 x, f32 y, f32 z)
     text->pos_z = z;
 }
 
-void mnDiagram_DrawNameHeaders(void* arg0, s32 arg1, s32 arg2)
+void mnDiagram_DrawNameHeaders(HSD_GObj* arg0, s32 arg1, s32 arg2)
 {
-    Diagram* data = ((HSD_GObj*) arg0)->user_data;
-    u8* sorted = mnDiagram_804A0750.sorted_fighters;
+    Diagram* data = arg0->user_data;
+    u8* sorted = mnDiagram_FighterDisplayOrder;
     HSD_Text* row_text;
     u8 name_byte;
     s32 name_id;
@@ -2587,12 +2572,13 @@ void mnDiagram_DrawNameHeaders(void* arg0, s32 arg1, s32 arg2)
 HSD_JObj* mnDiagram_CreateFighterIcon(int idx, int arg1)
 {
     HSD_JObj* sp10;
-    void** joint_data = mnDiagram_804A0804;
+    StaticModelDesc* model = &MenMainFaceB_Top;
     HSD_JObj* temp_r3;
     f32 var_f1;
 
-    temp_r3 = HSD_JObjLoadJoint(joint_data[0]);
-    HSD_JObjAddAnimAll(temp_r3, joint_data[1], joint_data[2], joint_data[3]);
+    temp_r3 = HSD_JObjLoadJoint(model->joint);
+    HSD_JObjAddAnimAll(temp_r3, model->animjoint, model->matanim_joint,
+                       model->shapeanim_joint);
     if (arg1 != 0) {
         var_f1 = 1.0f;
     } else {
@@ -2619,7 +2605,7 @@ mnDiagram_LoadHeaderIcon(void** joint_data, int fighter_id, HSD_JObj** child)
     return jobj;
 }
 
-void mnDiagram_DrawFighterHeaders(void* arg0, int arg1, int arg2)
+void mnDiagram_DrawFighterHeaders(HSD_GObj* arg0, int arg1, int arg2)
 {
     HSD_JObj* col_ref;
     HSD_JObj* row_ref;
@@ -2639,7 +2625,8 @@ void mnDiagram_DrawFighterHeaders(void* arg0, int arg1, int arg2)
     HSD_JObj* row_jobj;
     int col_idx;
     int col_remaining;
-    mnDiagram_Assets* assets = (mnDiagram_Assets*) &mnDiagram_804A0750;
+    mnDiagram_Assets* assets =
+        (mnDiagram_Assets*) &mnDiagram_FighterDisplayOrder;
     f32 x_spacing;
     f32 y_spacing;
     int i;
@@ -2648,7 +2635,7 @@ void mnDiagram_DrawFighterHeaders(void* arg0, int arg1, int arg2)
 
     // Column headers (fighter icons)
     for (i = 0; i < 7; i++) {
-        sorted = mnDiagram_804A0750.sorted_fighters;
+        sorted = mnDiagram_FighterDisplayOrder;
         joint_data = assets->FaceB;
         unlocked_count = mnDiagram_CountUnlockedFightersForHeaders();
         if (unlocked_count > i) {
@@ -2692,7 +2679,7 @@ void mnDiagram_DrawFighterHeaders(void* arg0, int arg1, int arg2)
     // Row headers (fighter icons)
     joint_data = assets->FaceB;
     for (i = 0; i < 10; i++) {
-        sorted = mnDiagram_804A0750.sorted_fighters;
+        sorted = mnDiagram_FighterDisplayOrder;
         unlocked_count = mnDiagram_CountUnlockedFightersForHeaders();
         if (unlocked_count > i) {
             HSD_JObj* row_child;
@@ -2752,7 +2739,7 @@ void mnDiagram_CursorProc(HSD_GObj* gobj)
     PAD_STACK(8);
 
     if ((mn_804A04F0.cur_menu != 0x1E) || (mn_804A04F0.x10 != 0)) {
-        HSD_GObjPLink_80390228(gobj);
+        HSD_GObjFree(gobj);
         return;
     }
 
@@ -2778,14 +2765,14 @@ void mnDiagram_CursorProc(HSD_GObj* gobj)
 
 void mnDiagram_CreateCursor(void)
 {
-    void** joint_data;
+    StaticModelDesc* model;
     HSD_GObj* gobj;
     HSD_JObj* jobj;
     PAD_STACK(40);
 
-    joint_data = mnDiagram_804A0814;
+    model = &MenMainCursorB1_Top;
     gobj = GObj_Create(6, 7, 0x80);
-    jobj = HSD_JObjLoadJoint(*joint_data);
+    jobj = HSD_JObjLoadJoint(model->joint);
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
     GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 4, 0x80);
     HSD_GObj_SetupProc(gobj, mnDiagram_CursorProc, 0);
@@ -2805,20 +2792,21 @@ void mnDiagram_CreateScreen(u8 arg0)
     Diagram* user_data;
     Diagram* data2;
     int count;
-    void** joint_data;
+    StaticModelDesc* model;
     mnDiagram_AnimTable* tbl = GET_DIAGRAM_ANIM_TABLE();
     int i;
     u16 indices;
     u8 stack_obj[8];
 
     (void) &stack_obj;
-    joint_data = (void**) &mnDiagram_804A0824;
+    model = &MenMainConB1_Top;
     gobj = GObj_Create(6, 7, 0x80);
     mnDiagram_804D6C10 = gobj;
-    jobj = HSD_JObjLoadJoint(joint_data[0]);
+    jobj = HSD_JObjLoadJoint(model->joint);
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
     GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 6, 0x80);
-    HSD_JObjAddAnimAll(jobj, joint_data[1], joint_data[2], joint_data[3]);
+    HSD_JObjAddAnimAll(jobj, model->animjoint, model->matanim_joint,
+                       model->shapeanim_joint);
     HSD_JObjReqAnimAll(jobj, 0.0f);
 
     user_data = HSD_MemAlloc(sizeof(Diagram));
@@ -2847,7 +2835,7 @@ void mnDiagram_CreateScreen(u8 arg0)
         lb_80011E24(jobj, &user_data->jobjs[i], i, -1);
     }
 
-    HSD_GObj_SetupProc(gobj, (void (*)(HSD_GObj*)) mnDiagram_OnFrame, 0);
+    HSD_GObj_SetupProc(gobj, mnDiagram_OnFrame, 0);
 
     if (arg0 == 0) {
         anim_jobj = user_data->jobjs[1];
@@ -2914,7 +2902,8 @@ void mnDiagram_CreateScreen(u8 arg0)
 /// @param arg1 Initial mode (passed to mnDiagram_CreateScreen)
 void mnDiagram_Init(u8 arg0, u8 arg1)
 {
-    mnDiagram_Assets* assets = (mnDiagram_Assets*) &mnDiagram_804A0750;
+    mnDiagram_Assets* assets =
+        (mnDiagram_Assets*) &mnDiagram_FighterDisplayOrder;
     HSD_GObj* gobj;
     HSD_GObjProc* proc;
     HSD_Archive* archive;
@@ -2962,7 +2951,6 @@ void mnDiagram_Init(u8 arg0, u8 arg1)
     mnDiagram_CreateScreen(mode_storage[0]);
 
     gobj = GObj_Create(0, 1, 0x80);
-    proc =
-        HSD_GObj_SetupProc(gobj, (void (*)(HSD_GObj*)) mnDiagram_InputProc, 0);
+    proc = HSD_GObj_SetupProc(gobj, mnDiagram_InputProc, 0);
     proc->flags_3 = HSD_GObj_804D783C;
 }

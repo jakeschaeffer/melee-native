@@ -1122,12 +1122,7 @@ void* efAsync_Dispatch(s32 gfx_id, HSD_GObj* gobj, va_list vlist)
     while (efLib_AnimCount != 0) {
         count = efLib_AnimCount - 1;
         efLib_AnimCount = count;
-#ifdef MELEE_NATIVE
-        HSD_JObjAnimAll(efLib_AnimQueue[count]);
-#else
-        HSD_JObjAnimAll(
-            ((EF_ParamEntry*) (((u32*) efLib_AnimQueue) + count))->gobj);
-#endif
+        HSD_JObjAnimAll(((HSD_JObj**) efLib_AnimQueue)[count]);
     }
 #if 1
 #else
@@ -1289,7 +1284,9 @@ void efAsync_OnLoad(HSD_Archive* archive, u8* data, u32 length, int index)
     lbArchive_InitializeDAT(archive, data, length);
     result = HSD_ArchiveGetPublicAddress(
         archive, efAsync_DatEntries[index].effDataTable_name);
-    if ((uintptr_t) result->ef_DAT_file | (uintptr_t) result->effDataTable_name) {
+    if ((uintptr_t) result->ef_DAT_file |
+        (uintptr_t) result->effDataTable_name)
+    {
         psInitDataBankLocate((HSD_Archive*) result->ef_DAT_file,
                              (HSD_Archive*) result->effDataTable_name, NULL);
     }
@@ -1318,7 +1315,8 @@ void efAsync_LoadSync(int idx)
     {
         bool chk = lbArchive_80017040(NULL, lookup->ef_DAT_file, &spC,
                                       lookup->effDataTable_name, NULL);
-        if ((uintptr_t) spC->ef_DAT_file | (uintptr_t) spC->effDataTable_name) {
+        if ((uintptr_t) spC->ef_DAT_file | (uintptr_t) spC->effDataTable_name)
+        {
             if (chk) {
                 psInitDataBankLoad(idx, (void*) spC->ef_DAT_file,
                                    (void*) spC->effDataTable_name, NULL, NULL);
@@ -1471,7 +1469,9 @@ void efAsync_Spawn(HSD_GObj* gobj, void* queue_head, u32 spawn_kind,
         break;
     }
     va_end(vlist);
-    if ((HSD_GObj_804D7838 != NULL) && (HSD_GObj_804D7838->s_link < 9U)) {
+    if ((HSD_GObj_CurrentInvokedProc != NULL) &&
+        (HSD_GObj_CurrentInvokedProc->s_link < 9U))
+    {
         queued->next = ((EF_QueuedEffect*) queue_head)->next;
         ((EF_QueuedEffect*) queue_head)->next = queued;
         return;
