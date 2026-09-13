@@ -2,7 +2,7 @@ name: Native macOS
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'integrate/**']
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -18,10 +18,14 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - name: Verify Xcode toolchain
         run: xcodebuild -version
       - name: Install build dependencies
         run: brew install cmake ninja python ruby pkg-config fmt libpng freetype zstd
+      - name: Verify upstream history
+        run: ruby native/tools/check_upstreams.rb
       - name: Fetch pinned native dependency
         run: python3 native/tools/bootstrap.py
       - name: Configure without game assets

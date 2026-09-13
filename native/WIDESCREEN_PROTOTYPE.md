@@ -1,11 +1,14 @@
 # macOS widescreen prototype
 
-Local branch: `prototype/macos-widescreen`, based on the Classic crash fixes.
+Originally developed on `prototype/macos-widescreen`, based on the Classic
+crash fixes, and included in `integrate/decomp-2026-09-12`.
 This is a separate experiment, not part of the Classic pull request.
 
 ## Use
 
-The local packaged build is installed as **Melee Native Widescreen.app**.
+The original local prototype was installed as **Melee Native Widescreen.app**.
+Build or package this branch separately; that installed app is not automatically
+updated by the integration. See [current validation](INTEGRATION_VALIDATION.md).
 Open **View > Aspect Ratio > 21:9** to enable it, or choose **Native (4:3)**.
 F8 switches between those choices. Both menu and keyboard choices are remembered.
 21:9 starts a 1680 × 720 window; Native starts a 960 × 720 window. Resizing or
@@ -50,7 +53,7 @@ MELEE_WIDESCREEN=1 MELEE_TEST_CAPTURE=0 \
 `MELEE_WIDESCREEN=0` forces original framing; `MELEE_FULLSCREEN=1` starts
 fullscreen. Environment overrides apply to command-line launches.
 
-## Local validation (2026-09-12)
+## Original prototype validation (2026-09-12, before decomp integration)
 
 - Apple M5 Pro / macOS 26.6.2 / Metal; native arm64 build.
 - 27 component and asset tests passed, including sanitized projection tests.

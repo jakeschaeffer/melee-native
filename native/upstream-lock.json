@@ -1,0 +1,12 @@
+{
+  "native": {
+    "repository": "https://github.com/jonrosner/melee-native.git",
+    "branch": "main",
+    "commit": "76e6bb95fc85538fddc3f4910adfb79d40c283a7"
+  },
+  "decomp": {
+    "repository": "https://github.com/doldecomp/melee.git",
+    "branch": "master",
+    "commit": "acafb74e8cf6b1b7a8615631173411367fc39880"
+  }
+}

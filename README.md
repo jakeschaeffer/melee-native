@@ -1,3 +1,20 @@
+# Jake's Melee Native integration
+
+Personal integration branch of [jonrosner/melee-native](https://github.com/jonrosner/melee-native),
+with the full history of [doldecomp/melee](https://github.com/doldecomp/melee).
+This is not an official release of either upstream project.
+
+This branch combines the decompilation updates through `acafb74e8`, the native
+port through `76e6bb95f`, our macOS Classic/Continue fixes, and the Native (4:3) /
+21:9 display prototype. See [integration and future sync instructions](native/UPSTREAM_SYNC.md)
+and [display controls and limitations](native/WIDESCREEN_PROTOTYPE.md).
+
+**The download buttons below point to the original maintainer's older releases,
+not this integration build.** Build this branch from source or use its own CI
+artifacts. Your own US 1.02 disc is required; do not commit or distribute game assets.
+
+---
+
 <p align="center">
   <img src="native/platform/macos/resources/SSBM.png" alt="Super Smash Bros. Melee" width="560">
 </p>

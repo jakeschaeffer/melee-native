@@ -2,7 +2,7 @@ name: Native Linux
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'integrate/**']
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -16,12 +16,17 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - name: Install build and packaging dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y clang libclang-rt-18-dev ninja-build cmake python3 ruby pkg-config patchelf zstd libpng-dev libfreetype-dev libzstd-dev libx11-dev libxext-dev libxcursor-dev libxi-dev libxrandr-dev libxfixes-dev libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev libdecor-0-dev libasound2-dev libpulse-dev libudev-dev libdbus-1-dev libegl-dev libgl-dev
       - name: Fetch pinned dependency
-        run: python3 native/tools/bootstrap.py
+        # Upstream history is independent of platform build dependencies.
+        run: |
+          ruby native/tools/check_upstreams.rb
+          python3 native/tools/bootstrap.py
       - name: Configure without a game image
         run: CC=clang CXX=clang++ cmake -S native -B build/native-linux -G Ninja -DCMAKE_BUILD_TYPE=Debug
       - name: Build native executable and component tests
