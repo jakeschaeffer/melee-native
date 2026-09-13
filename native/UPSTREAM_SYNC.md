@@ -7,9 +7,11 @@ Keep `jakeschaeffer/melee-native`: GitHub already identifies its parent as
 another decomp fork would not remove any integration conflicts. Preserve both
 upstream histories in this fork and merge their updates explicitly.
 
-The `integrate/decomp-2026-09-12` branch is separate from `main` and from
-`fix/macos-classic-crashes` (upstream PR #2). Do not add this integration to
-that focused crash-fix PR. The original local prototype worktree is unchanged.
+`main` is our primary native development target. The integration was prepared
+on `integrate/decomp-2026-09-12` and promoted without rewriting either upstream's
+history. `fix/macos-classic-crashes` (upstream PR #2) remains separate: do not
+add this integration to that focused crash-fix PR. The original local prototype
+worktree is unchanged.
 
 ## Included snapshots
 
@@ -51,7 +53,7 @@ The separate prototype commit precedes the integration merge. It includes our
 ```sh
 git clone https://github.com/jakeschaeffer/melee-native.git
 cd melee-native
-git switch --track origin/integrate/decomp-2026-09-12
+git switch main
 git remote add native-upstream https://github.com/jonrosner/melee-native.git
 git remote add decomp https://github.com/doldecomp/melee.git
 git fetch native-upstream main
@@ -79,6 +81,11 @@ those URLs; use `git remote -v` first.
 6. Promote to your fork's `main` only after reviewing the diff and checks. Send
    small, independently useful fixes back to the appropriate upstream separately.
 
+Native-only layout adaptations stay under `MELEE_NATIVE`; original console
+layout paths remain available. Pointer-carrying result arguments use `intptr_t`,
+which is still `signed int` in the decomp's 32-bit MSL headers. Preserve upstream
+names and APIs when integrating changes; do not rename unidentified game fields.
+
 The standard build/bootstrap commands remain in the root README. The original
 decompilation instructions remain in `.github/UPSTREAM_README.md`.
 
@@ -95,6 +102,8 @@ branch's executable, `MELEE_TEST_CAPTURE=0`, and your locally owned disc path:
 - `native/tests/match-controls.input`: VS CPU, movement, attacks, pause/resume.
 - `native/tests/classic-start.input`: normal menus into a Classic fight.
 - `native/tests/classic-continue.input`: lose, choose Continue, reach another fight.
+- `native/tests/classic-win.input` with `MELEE_TEST_CLASSIC_WIN=1`: a test-only
+  enemy KO followed by real victory/bonus cleanup and advancement to the next fight.
 - `native/tests/mute-city-soak.input`: one minute of racing-car hazards, with
   the explicit matrix environment listed in `INTEGRATION_VALIDATION.md`.
 - Exercise both `MELEE_WIDESCREEN=0` and `1`; manually inspect Native (4:3), 21:9,

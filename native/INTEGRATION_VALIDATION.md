@@ -1,9 +1,30 @@
 # Decomp integration validation — 2026-09-12
 
-Scope: `integrate/decomp-2026-09-12`; exact upstream commits are recorded in
+Scope: our `main`, prepared on `integrate/decomp-2026-09-12`; exact upstream commits are recorded in
 `upstream-lock.json`. This is an experimental integration, not a stable release.
 
-## Local checks
+See [the Classic victory fix](CLASSIC_WIN_FIX.md) for the additional round-win
+regressions and fixes required after the initial integration checks below.
+
+## Victory-fix validation
+
+- Code commit `588b3a3e6`: full native rebuild and all 31 local tests passed.
+- 21:9 Classic win, bonus screen, next intro and ten seconds of the second fight:
+  `build/native-runs/20260912-182642` passed.
+- Packaged executable repeated that sequence in Native (4:3):
+  `build/native-runs/20260912-182918` passed.
+- Packaged 21:9 VS controls without the Classic test hook:
+  `build/native-runs/20260912-183044` passed.
+- The update package is in `dist/classic-win`. Signature and dependency relocation
+  checks passed; four libraries are bundled and no disc/assets are included.
+- `/Applications/Melee Native Integration.app` was updated from that tested
+  package. The old app is retained at
+  `dist/backups/Melee Native Integration pre-win-fix.app`; the installed
+  Widescreen fallback and original prototype checkout were left unchanged.
+- These targeted runs do not certify a full Classic playthrough. The test-only
+  KO and remaining renderer/platform limitations are described in `CLASSIC_WIN_FIX.md`.
+
+## Initial integration checks (before the victory fix)
 
 Apple M5 Pro, macOS 26.6.2, Xcode 26.6, native arm64 / Metal.
 
@@ -26,7 +47,8 @@ Apple M5 Pro, macOS 26.6.2, Xcode 26.6, native arm64 / Metal.
   merge, verified by `ruby native/tools/check_upstreams.rb`.
 - Packaging passed relocation/signature checks: four bundled libraries, no
   disc image or extracted assets. The local ad-hoc-signed package is in
-  `dist/decomp-integration`; its manifest identifies the packaged commit.
+  `dist/decomp-integration`; its manifest records packaged file hashes. This
+  original package predates the victory fix and should not be used as the update.
 
 Local evidence (ignored build output, not published game assets):
 
@@ -54,7 +76,8 @@ No Linux gameplay, Intel Mac, older macOS, or byte-matching GameCube validation
 has been performed here. Local Homebrew libraries target macOS 26.0 even though
 the app deployment target is 15.5; this build does not establish 15.5 compatibility.
 
-Public macOS/Linux CI must pass before promoting this branch. CI has no game
+Public macOS/Linux CI must pass before promoting changes to `main`. CI has no game
 disc/assets, so it cannot run the disc-backed gameplay tests. Your existing
-installed apps, dirty prototype checkout, fork `main`, and focused Classic PR
-were not replaced by this integration.
+dirty prototype checkout and focused Classic PR remain separate. `main` is now
+the primary target; the installed Integration app is updated only after testing
+its replacement package.

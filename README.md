@@ -1,17 +1,18 @@
 # Jake's Melee Native integration
 
-Personal integration branch of [jonrosner/melee-native](https://github.com/jonrosner/melee-native),
+Personal development fork of [jonrosner/melee-native](https://github.com/jonrosner/melee-native),
 with the full history of [doldecomp/melee](https://github.com/doldecomp/melee).
 This is not an official release of either upstream project.
 
-This branch combines the decompilation updates through `acafb74e8`, the native
+Our primary development target is **`jakeschaeffer/melee-native:main`**. It
+combines the decompilation updates through `acafb74e8`, the native
 port through `76e6bb95f`, our macOS Classic/Continue fixes, and the Native (4:3) /
 21:9 display prototype. See [integration and future sync instructions](native/UPSTREAM_SYNC.md)
 and [display controls and limitations](native/WIDESCREEN_PROTOTYPE.md).
 
-**The download buttons below point to the original maintainer's older releases,
-not this integration build.** Build this branch from source or use its own CI
-artifacts. Your own US 1.02 disc is required; do not commit or distribute game assets.
+Use a successful **main** run's downloadable artifact from the build links below,
+or build from source. These are experimental development builds, not stable
+releases. Your own US 1.02 disc is required; do not commit or distribute game assets.
 
 ---
 
@@ -26,8 +27,8 @@ artifacts. Your own US 1.02 disc is required; do not commit or distribute game a
 </p>
 
 <p align="center">
-  <a href="https://github.com/jonrosner/melee-native/releases/download/v0.1.0/Melee-Native-macOS-arm64.dmg"><img src="https://img.shields.io/badge/Download-macOS-8b5cf6?style=for-the-badge&amp;logo=apple&amp;logoColor=white" alt="Download for macOS"></a>
-  <a href="https://github.com/jonrosner/melee-native/releases/download/v0.1.0-linux.1/Melee-Native-Linux-x86_64.tar.gz"><img src="https://img.shields.io/badge/Download-Linux-f4c542?style=for-the-badge&amp;logo=linux&amp;logoColor=black" alt="Download for Linux"></a>
+  <a href="https://github.com/jakeschaeffer/melee-native/actions/workflows/native-macos.yml?query=branch%3Amain"><img src="https://img.shields.io/badge/Builds-macOS-8b5cf6?style=for-the-badge&amp;logo=apple&amp;logoColor=white" alt="Our macOS builds"></a>
+  <a href="https://github.com/jakeschaeffer/melee-native/actions/workflows/native-linux.yml?query=branch%3Amain"><img src="https://img.shields.io/badge/Builds-Linux-f4c542?style=for-the-badge&amp;logo=linux&amp;logoColor=black" alt="Our Linux builds"></a>
 </p>
 
 <p align="center">
@@ -38,7 +39,7 @@ artifacts. Your own US 1.02 disc is required; do not commit or distribute game a
 <p align="center">
   <a href="#play-on-macos">macOS setup</a> &nbsp; · &nbsp;
   <a href="#play-on-linux">Linux setup</a> &nbsp; · &nbsp;
-  <a href="https://github.com/jonrosner/melee-native/releases">All releases</a>
+  <a href="https://github.com/jonrosner/melee-native/releases">Original upstream releases</a>
 </p>
 
 ---
@@ -70,16 +71,16 @@ native/                    Shared native runtime and platform interface
 
 ## Play on Linux
 
-[Download the Linux x86-64 app](https://github.com/jonrosner/melee-native/releases/download/v0.1.0-linux.1/Melee-Native-Linux-x86_64.tar.gz),
-extract it and run `melee-native`. Select your own Melee US 1.02 image, then
+[Open our Linux builds](https://github.com/jakeschaeffer/melee-native/actions/workflows/native-linux.yml?query=branch%3Amain),
+choose a successful main run, and download its artifact (GitHub sign-in required).
+Extract the app archive and run `melee-native`. Select your own Melee US 1.02 image, then
 choose **No** at the save prompt. Requires Ubuntu 24.04 or compatible glibc 2.39+
 Linux, hardware Vulkan drivers, and a desktop/audio session.
 
 [Linux build and packaging instructions](native/LINUX.md) include GPU selection,
 Arch/Omarchy packages, and the limits of the Ubuntu hardware validation.
-[All release downloads](https://github.com/jonrosner/melee-native/releases/tag/v0.1.0-linux.1)
-include the Arch package and matching macOS app. No disc image or extracted
-game assets are included.
+The [original upstream releases](https://github.com/jonrosner/melee-native/releases)
+do not contain this fork's changes. No disc image or extracted game assets are included.
 
 ## Play on macOS
 
@@ -87,9 +88,10 @@ Requires an Apple Silicon Mac running macOS 15.5 or newer and your own
 **Melee US 1.02 disc image (GALE01, revision 2)**. ISO, GCM, CISO and RVZ work.
 Game assets and disc images are not included or downloaded by the project.
 
-**[Download for macOS (Apple Silicon)](https://github.com/jonrosner/melee-native/releases/download/v0.1.0/Melee-Native-macOS-arm64.dmg)**
+**[Open our macOS builds (Apple Silicon)](https://github.com/jakeschaeffer/melee-native/actions/workflows/native-macos.yml?query=branch%3Amain)**
 
-Experimental v0.1.0 · [Release notes and ZIP download](https://github.com/jonrosner/melee-native/releases/tag/v0.1.0)
+Choose a successful main run, download its artifact (GitHub sign-in required),
+and extract the DMG or ZIP. Builds are ad-hoc signed and not Apple-notarized.
 
 Open the **DMG**, drag **Melee Native** to **Applications**, and open the app.
 Drop your disc image into the setup window or click **Choose File**. Once it is
@@ -126,6 +128,8 @@ Install **Xcode 26.2** and Homebrew. Select Xcode's toolchain rather than an
 older standalone Command Line Tools installation, then build:
 
 ```sh
+git clone https://github.com/jakeschaeffer/melee-native.git
+cd melee-native
 export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 xcodebuild -version
 brew install cmake ninja python ruby pkg-config fmt libpng freetype zstd
