@@ -5,6 +5,8 @@ Scope: our `main`, prepared on `integrate/decomp-2026-09-12`; exact upstream com
 
 See [the Classic victory fix](CLASSIC_WIN_FIX.md) for the additional round-win
 regressions and fixes required after the initial integration checks below.
+The subsequent [Kirby copy-asset fix](KIRBY_COPY_FIX.md) addresses character-
+dependent match-start crashes that those earlier lineup samples did not cover.
 
 ## Victory-fix validation
 

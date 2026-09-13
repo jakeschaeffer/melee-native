@@ -225,7 +225,7 @@ struct Archive {
         default:return AT_NONE;
         }
     }
-    void* materialize(unsigned type,std::uint32_t offset,size_t explicit_count=0) {
+    void* materialize(unsigned type,std::uint32_t offset,size_t explicit_count=0,const MeleeAssetSchema* override_schema=nullptr) {
         if(type==AT_ITEM_POINTER_WORDS) {
             const auto key=std::make_pair(type,offset);
             if(auto found=objects.find(key);found!=objects.end()) return found->second;
@@ -332,7 +332,7 @@ struct Archive {
             }
             return result;
         }
-        const auto schema=MeleeNativeAssetSchema(type);
+        const auto schema=override_schema?override_schema:MeleeNativeAssetSchema(type);
         if(!schema) throw std::runtime_error("Missing native asset type "+std::to_string(type));
         size_t count=explicit_count?explicit_count:1;
         if(type==AT_ITEM_STATES) {
@@ -495,13 +495,22 @@ struct Archive {
         if (root->first=="lbRumbleData") result=rumble(root->second);
         else if(root->first=="lbBgFlashColAnimData") result=materialize(AT_COLOR_DESC,root->second);
         else if(root->first=="itPublicData") result=materialize(AT_ITEM_PUBLIC,root->second);
-        else if(root->first=="ftDataKirbyCopyYoshi") {
-            if(auto article=source.pointer(root->second+32)) item_special_types[*article]=AT_ITEM_NUMBERS;
-            result=materialize(AT_KIRBY_COPY_YOSHI,root->second);
-        }
-        else if(root->first=="ftDataKirbyCopyFox" || root->first=="ftDataKirbyCopyMario" || root->first=="ftDataKirbyCopyDrmario" || root->first=="ftDataKirbyCopyLuigi") {
-            for(unsigned field:{12U,16U}) if(auto article=source.pointer(root->second+field)) item_special_types[*article]=AT_ITEM_NUMBERS;
-            result=materialize(AT_KIRBY_COPY_FOX,root->second);
+        else if(root->first.starts_with("ftDataKirbyCopy")) {
+            const auto schema=MeleeNativeKirbyCopySchema(name);
+            if(!schema) throw std::runtime_error("Unknown Kirby copy layout: "+root->first);
+            source.bytes(root->second,schema->file_size);
+            for(unsigned i=0;i<schema->field_count;++i) {
+                const auto& field=schema->fields[i];
+                if(field.kind!=AF_POINTER||field.target!=AT_ARTICLE) continue;
+                if(auto article=source.pointer(root->second+field.file_offset)) {
+                    unsigned special=AT_ITEM_NUMBERS;
+                    if((root->first=="ftDataKirbyCopyLink"||root->first=="ftDataKirbyCopyClink")&&field.file_offset==12) special=AT_ITEM_ARROW;
+                    if(root->first=="ftDataKirbyCopyGamewatch") special=field.file_offset==32?AT_ITEM_CHEF:AT_ITEM_GW;
+                    item_special_types[*article]=special;
+                }
+            }
+            // Keep copy roots out of the ordinary ftData object cache.
+            result=materialize(AT_KIRBY_COPY_FOX,root->second,0,schema);
         }
         else if(root->first.starts_with("ftData")) {fighter_name=root->first;result=materialize(AT_FIGHTER,root->second);}
         else if(root->first.ends_with("_figatree")) result=materialize(AT_FIGATREE,root->second);

@@ -1,4 +1,5 @@
 #include "asset_schema.h"
+#include <string.h>
 #include <melee/sc/types.h>
 #include <melee/ef/types.h>
 #include <melee/ft/fighter.h>
@@ -117,6 +118,63 @@ S(itemgrapple,itSamusGrappleAttributes,176,U(itSamusGrappleAttributes,x0,0,25),P
 S(itempublic,it_804D6D20_t,24,P(it_804D6D20_t,x0,0,AT_ITEM_COMMON),P(it_804D6D20_t,x4,4,AT_ARTICLES),P(it_804D6D20_t,x8,8,AT_ARTICLES),P(it_804D6D20_t,xC,12,AT_ARTICLES),P(it_804D6D20_t,x10,16,AT_WORDS),P(it_804D6D20_t,x14,20,AT_COLOR_DESC));
 S(kirbycopyfox,KirbyHatStruct,20,P(KirbyHatStruct,hat_joint,0,AT_JOINT),U(KirbyHatStruct,desc.model_num,4,1),P(KirbyHatStruct,desc.vis_table,8,AT_FIGHTER_VIS_TABLE),P(KirbyHatStruct,hat_dynamics[0],12,AT_ARTICLE),P(KirbyHatStruct,hat_dynamics[1],16,AT_ARTICLE));
 S(kirbycopyyoshi,KirbyHatStruct,36,P(KirbyHatStruct,hat_joint,0,AT_JOINT),U(KirbyHatStruct,desc.model_num,4,1),P(KirbyHatStruct,desc.vis_table,8,AT_FIGHTER_VIS_TABLE),P(KirbyHatStruct,hat_dynamics[0],12,AT_JOINT),P(KirbyHatStruct,hat_dynamics[1],16,AT_ANIM),P(KirbyHatStruct,hat_dynamics[2],20,AT_ANIM),P(KirbyHatStruct,hat_dynamics[3],24,AT_ANIM),P(KirbyHatStruct,hat_dynamics[4],28,AT_ANIM),P(KirbyHatStruct,hat_dynamics[5],32,AT_ARTICLE));
+// Copy records are NOT ftData. Most contain a hat joint and FtPartsDesc;
+// body-replacement copies instead begin with FtPartsDesc and ftData_x8_x8.
+// LOAD_HAT consumes the latter through overlapping views of KirbyHatStruct.
+typedef struct NativeKirbyCopyParts {
+    FtPartsDesc parts;
+    ftData_x8_x8 anim;
+    uintptr_t mask;
+    HSD_Joint* joint;
+    void* extra[4];
+} NativeKirbyCopyParts;
+_Static_assert(sizeof(NativeKirbyCopyParts)==sizeof(KirbyHatStruct),"Kirby copy allocation");
+_Static_assert(offsetof(NativeKirbyCopyParts,anim)==offsetof(KirbyHatStruct,desc.vis_table),"Kirby copy animation view");
+_Static_assert(offsetof(NativeKirbyCopyParts,mask)==offsetof(KirbyHatStruct,hat_dynamics[1]),"Kirby copy mask view");
+_Static_assert(offsetof(NativeKirbyCopyParts,extra)==offsetof(KirbyHatStruct,hat_dynamics[3]),"Kirby copy tail view");
+#define KH P(KirbyHatStruct,hat_joint,0,AT_JOINT),U(KirbyHatStruct,desc.model_num,4,1),P(KirbyHatStruct,desc.vis_table,8,AT_FIGHTER_VIS_TABLE)
+#define KT(i,t) P(KirbyHatStruct,hat_dynamics[i],12+4*(i),t)
+#define KP U(NativeKirbyCopyParts,parts.model_num,0,1),P(NativeKirbyCopyParts,parts.vis_table,4,AT_FIGHTER_VIS_TABLE),U(NativeKirbyCopyParts,anim.x8,8,1),P(NativeKirbyCopyParts,anim.xC,12,AT_HALF_TABLE),U(NativeKirbyCopyParts,mask,16,1),P(NativeKirbyCopyParts,joint,20,AT_JOINT)
+#define KE(i,t) P(NativeKirbyCopyParts,extra[i],24+4*(i),t)
+S(kirbyhat,KirbyHatStruct,12,KH);
+S(kirbyarticle,KirbyHatStruct,16,KH,KT(0,AT_ARTICLE));
+S(kirbyarticledynamics,KirbyHatStruct,20,KH,KT(0,AT_ARTICLE),KT(1,AT_FIGHTER_DYNAMICS));
+S(kirbyarticlesdynamics,KirbyHatStruct,24,KH,KT(0,AT_ARTICLE),KT(1,AT_ARTICLE),KT(2,AT_FIGHTER_DYNAMICS));
+S(kirbyarticlejoint,KirbyHatStruct,20,KH,KT(0,AT_ARTICLE),KT(1,AT_JOINT));
+S(kirbyjointdynamics,KirbyHatStruct,20,KH,KT(0,AT_JOINT),KT(1,AT_FIGHTER_DYNAMICS));
+S(kirbydynamics,KirbyHatStruct,16,KH,KT(0,AT_FIGHTER_DYNAMICS));
+S(kirbyparts,NativeKirbyCopyParts,24,KP);
+S(kirbypartsdynamics,NativeKirbyCopyParts,28,KP,KE(0,AT_FIGHTER_DYNAMICS));
+S(kirbypartsarticles,NativeKirbyCopyParts,32,KP,KE(0,AT_ARTICLE),KE(1,AT_ARTICLE));
+S(kirbypartsarticledynamics,NativeKirbyCopyParts,32,KP,KE(0,AT_ARTICLE),KE(1,AT_FIGHTER_DYNAMICS));
+// The copy's color block is read as packed RGBA bytes at +4/+8 by
+// ftKb_SpecialN_800F14B4, not as a full ftGameWatchAttributes structure.
+S(kirbypartsgamewatch,NativeKirbyCopyParts,40,KP,KE(0,AT_FIGHTER_VIS),KE(1,AT_RAW),KE(2,AT_ARTICLE),KE(3,AT_ARTICLE));
+#undef KH
+#undef KT
+#undef KP
+#undef KE
+const MeleeAssetSchema* MeleeNativeKirbyCopySchema(const char* name) {
+    static const struct { const char* name; const MeleeAssetSchema* schema; } copies[]={
+        {"Mario",&kirbyarticle},{"Fox",&kirbycopyfox},{"Captain",&kirbyhat},
+        {"Donkey",&kirbyparts},{"Koopa",&kirbyarticledynamics},
+        {"Link",&kirbyarticlesdynamics},{"Seak",&kirbyarticlesdynamics},
+        {"Ness",&kirbycopyfox},{"Peach",&kirbycopyfox},
+        {"Popo",&kirbyarticlejoint},{"Pikachu",&kirbyarticlesdynamics},
+        {"Samus",&kirbyarticle},{"Yoshi",&kirbycopyyoshi},
+        {"Purin",&kirbypartsdynamics},{"Mewtwo",&kirbypartsarticledynamics},
+        {"Luigi",&kirbyarticle},{"Mars",&kirbyjointdynamics},
+        {"Zelda",&kirbydynamics},{"Clink",&kirbyarticlesdynamics},
+        {"Drmario",&kirbyarticle},{"Falco",&kirbypartsarticles},
+        {"Pichu",&kirbyarticlesdynamics},{"Gamewatch",&kirbypartsgamewatch},
+        {"Ganon",&kirbyhat},{"Emblem",&kirbyjointdynamics},
+    };
+    const char prefix[]="ftDataKirbyCopy";
+    if(strncmp(name,prefix,sizeof(prefix)-1)!=0) return NULL;
+    for(unsigned i=0;i<sizeof(copies)/sizeof(*copies);++i)
+        if(strcmp(name+sizeof(prefix)-1,copies[i].name)==0) return copies[i].schema;
+    return NULL;
+}
 S(gamewatchattr,ftGameWatchAttributes,148,U(ftGameWatchAttributes,x0_GAMEWATCH_WIDTH,0,1),B(ftGameWatchAttributes,x4_GAMEWATCH_COLOR,4,20),U(ftGameWatchAttributes,x18_GAMEWATCH_CHEF_LOOPFRAME,24,31));
 S(fighter,ftData,96,P(ftData,x0,0,AT_FIGHTER_ATTR),P(ftData,ext_attr,4,AT_ITEM_NUMBERS),P(ftData,x8,8,AT_FIGHTER_PARTS),P(ftData,xC,12,AT_FIGHTER_ANIMS),P(ftData,x10,16,AT_RAW),P(ftData,x14,20,AT_FIGHTER_ANIMS),P(ftData,x18,24,AT_RAW),P(ftData,x1C,28,AT_FIGHTER_PART_ANIM_TABLE),P(ftData,x20,32,AT_FIGHTER_GUARD),P(ftData,x24,36,AT_WORDS),P(ftData,x28,40,AT_WORDS),P(ftData,x2C,44,AT_FIGHTER_DYNAMICS),P(ftData,x30,48,AT_FIGHTER_HURT),P(ftData,x34,52,AT_WORDS),P(ftData,x38,56,AT_WORDS),P(ftData,x3C,60,AT_WORDS),P(ftData,x40,64,AT_WORDS),P(ftData,x44,68,AT_FIGHTER_LEDGE),P(ftData,x48_items,72,AT_FIGHTER_ITEMS),P(ftData,x4C_sfx,76,AT_FIGHTER_SFX),P(ftData,x50,80,AT_WORDS),P(ftData,x54,84,AT_WORDS),P(ftData,x58,88,AT_FIGHTER_IK),P(ftData,x5C,92,AT_JOINT));
 S(fighterattr,ftCo_DatAttrs,388,U(ftCo_DatAttrs,walk_accel_mul,0,96),B(ftCo_DatAttrs,weight_independent_throws_mask,384,1));

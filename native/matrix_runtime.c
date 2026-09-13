@@ -32,6 +32,10 @@ void MeleeNativeTestConfigureVs(VsModeData* vs)
     vs->start.rules.time_limit = 30;
     vs->start.players[0].ckind = setting("MELEE_TEST_CHARACTER", 32, CKind_Fox);
     vs->start.players[1].ckind = setting("MELEE_TEST_OPPONENT", 32, CKind_Mario);
+    for (int slot = 2; slot < setting("MELEE_TEST_PLAYERS", 4, 2); ++slot) {
+        vs->start.players[slot] = vs->start.players[1];
+        vs->start.players[slot].ckind = slot == 2 ? CKind_Captain : CKind_Kirby;
+    }
     for (unsigned i = 0; i < 2; ++i) {
         vs->start.players[i].color = 0;
         vs->start.players[i].slot_type = Gm_PKind_Cpu;
@@ -74,6 +78,10 @@ void MeleeNativeTestPrepareCss(CSSData* css)
         css->vs.start.players[1].ckind = CKind_Zelda;
     css->vs.start.players[1].color = 0;
     css->vs.start.players[1].slot_type = Gm_PKind_Cpu;
+    for (int slot = 2; slot < setting("MELEE_TEST_PLAYERS", 4, 2); ++slot) {
+        css->vs.start.players[slot] = css->vs.start.players[1];
+        css->vs.start.players[slot].ckind = slot == 2 ? CKind_Captain : CKind_Kirby;
+    }
 }
 
 #include <melee/pl/player.h>
@@ -95,6 +103,9 @@ void MeleeNativeMatrixScene(int scene)
     if (scene == 2 && getenv("MELEE_TEST_CLASSIC_WIN") &&
         getenv("MELEE_INPUT_SCRIPT") && gm_GetCurrentGameMode() == GM_CLASSIC) {
         fprintf(stderr, "[classic-win] match=%u\n", ++classic_matches);
+        for (int slot = 0; slot < GM_MAX_PLAYERS; ++slot)
+            if (Player_GetEntity(slot))
+                fprintf(stderr, "[classic-win] player=%d character=%d\n", slot, Player_GetPlayerCharacter(slot));
     }
     if (scene == 2 && getenv("MELEE_MATRIX_TEST")) {
         int expected = setting("MELEE_TEST_CHARACTER", 32, CKind_Fox);
@@ -106,6 +117,12 @@ void MeleeNativeMatrixScene(int scene)
         fprintf(stderr, "[matrix-ready] opponent=%d expected-opponent=%d\n", actual_opponent, expected_opponent);
         if (actual != expected || actual_opponent != expected_opponent || Stage_80225194() != stage)
             OSPanic(__FILE__, __LINE__, "Matrix selection mismatch");
+        for (int slot = 2; slot < setting("MELEE_TEST_PLAYERS", 4, 2); ++slot) {
+            int wanted = slot == 2 ? CKind_Captain : CKind_Kirby;
+            fprintf(stderr, "[matrix-ready] player=%d character=%d\n", slot, Player_GetPlayerCharacter(slot));
+            if (!Player_GetEntity(slot) || Player_GetPlayerCharacter(slot) != wanted)
+                OSPanic(__FILE__, __LINE__, "Matrix extra-player mismatch");
+        }
     }
 }
 void MeleeNativeMatrixTick(void)

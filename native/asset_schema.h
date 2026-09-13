@@ -18,6 +18,7 @@ enum MeleeAssetFieldKind { AF_BYTE=1, AF_HALF=2, AF_WORD=4, AF_POINTER=8 };
 typedef struct MeleeAssetField { unsigned file_offset; size_t host_offset; unsigned kind, count, target; } MeleeAssetField;
 typedef struct MeleeAssetSchema { unsigned file_size; size_t host_size; const MeleeAssetField* fields; unsigned field_count; } MeleeAssetSchema;
 const MeleeAssetSchema* MeleeNativeAssetSchema(unsigned type);
+const MeleeAssetSchema* MeleeNativeKirbyCopySchema(const char* name);
 unsigned MeleeNativeItemSpecialType(unsigned kind);
 void MeleeNativeItemFlags(void* data, unsigned first, unsigned second);
 #ifdef __cplusplus

@@ -19,6 +19,23 @@
 _Static_assert(offsetof(HSD_PSTexGroup,texTable)==24,"Particle texture ABI");
 _Static_assert(offsetof(HSD_PSCmdList,cmdList)==60,"Particle bytecode ABI");
 static unsigned joints;
+void MeleeCheckKirbyCopy(void* root,int parts) {
+    KirbyHatStruct* hat=root;
+    HSD_Joint* joint;
+    if(parts) {
+        FtPartsDesc* desc=root;
+        ftData_x8_x8* anim=(ftData_x8_x8*)&hat->desc.vis_table;
+        if(desc->model_num!=1||!desc->vis_table||anim->x8!=2||anim->xC||
+           (uintptr_t)hat->hat_dynamics[1]!=0x1800) abort();
+        joint=(HSD_Joint*)hat->hat_dynamics[2];
+        for(unsigned i=3;i<7;++i) if(hat->hat_dynamics[i]) abort();
+    } else {
+        if(hat->desc.model_num!=1||!hat->desc.vis_table) abort();
+        joint=hat->hat_joint;
+        for(unsigned i=0;i<7;++i) if(hat->hat_dynamics[i]) abort();
+    }
+    if(!joint||joint->flags!=0x1234||joint->child||joint->next) abort();
+}
 static void visit(HSD_Joint* joint) {
     if(!joint) return;
     if(++joints>4096 || !isfinite(joint->position.x) || !isfinite(joint->scale.x)) abort();

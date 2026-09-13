@@ -11,6 +11,7 @@ extern "C" void MeleeCheckGamewatchColors(void*,const void*);
 extern "C" unsigned MeleeCheckEffects(void*);
 extern "C" unsigned MeleeCheckItems(void*);
 extern "C" void MeleeCheckStageFlags(void);
+extern "C" void MeleeCheckKirbyCopy(void*,int);
 extern "C" void* MeleeNativeAnimationAt(const void*,unsigned);
 static void put(std::vector<std::byte>& data,size_t at,unsigned value) {
     for(int i=3;i>=0;--i) {data[at+i]=std::byte(value&255);value>>=8;}
@@ -116,12 +117,43 @@ static void checkTrophyFilenames() {
         MeleeNativeArchiveRelease(bytes.data());
     }
 }
+static void checkKirbyCopies() {
+    // Generated fixtures, not game assets. Every supported public root must
+    // dispatch as a copy record, including both incompatible prefix layouts.
+    for(const char* suffix:{"Mario","Fox","Captain","Donkey","Koopa",
+            "Link","Seak","Ness","Peach","Popo","Pikachu","Samus",
+            "Yoshi","Purin","Mewtwo","Luigi","Mars","Zelda","Clink",
+            "Drmario","Falco","Pichu","Gamewatch","Ganon","Emblem"}) {
+        const std::string name=std::string("ftDataKirbyCopy")+suffix;
+        const bool parts=std::strcmp(suffix,"Donkey")==0||std::strcmp(suffix,"Purin")==0||
+            std::strcmp(suffix,"Mewtwo")==0||std::strcmp(suffix,"Falco")==0||std::strcmp(suffix,"Gamewatch")==0;
+        constexpr unsigned size=144;
+        std::vector<std::byte> bytes(32+size+8+8+name.size()+1);
+        put(bytes,0,bytes.size());put(bytes,4,size);put(bytes,8,2);put(bytes,12,1);
+        if(parts) {
+            put(bytes,32,1);put(bytes,36,128);put(bytes,40,2);
+            put(bytes,48,0x1800);put(bytes,52,64);
+            put(bytes,32+size,4);put(bytes,36+size,20);
+        } else {
+            put(bytes,32,64);put(bytes,36,1);put(bytes,40,128);
+            put(bytes,32+size,0);put(bytes,36+size,8);
+        }
+        put(bytes,32+64+4,0x1234); // Joint flags, checked through the C layout.
+        std::memcpy(bytes.data()+32+size+16,name.c_str(),name.size()+1);
+        int key;
+        assert(MeleeNativeArchiveCreate(&key,bytes.data(),bytes.size())==0);
+        void* copy=MeleeNativeArchivePublic(&key,name.c_str());
+        assert(copy&&MeleeNativeArchivePublic(&key,name.c_str())==copy);
+        MeleeCheckKirbyCopy(copy,parts);
+        MeleeNativeArchiveRelease(bytes.data());
+    }
+}
 extern "C" void MeleeNativeRegisterVertexBuffer(const void* data,size_t size,int little) {
     assert(data&&size&&!little); assert(registered.emplace(data,size).second);
 }
 extern "C" void MeleeNativeUnregisterVertexBuffer(const void* data) { assert(registered.erase(data)==1); }
 int main(int argc,char** argv) {
-    checkExternalBindings();checkScriptAddressSpace();checkAnimationIndexing();checkClassicIntroLayout();checkTrophyFilenames();MeleeCheckStageFlags();
+    checkExternalBindings();checkScriptAddressSpace();checkAnimationIndexing();checkClassicIntroLayout();checkTrophyFilenames();checkKirbyCopies();MeleeCheckStageFlags();
     int key;
     unsigned char malformed[32]={0}; assert(MeleeNativeArchiveCreate(&key,malformed,sizeof(malformed))==-1);
     bool stage_core=false, animation_bundle=false;
