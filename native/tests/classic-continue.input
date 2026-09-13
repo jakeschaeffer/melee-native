@@ -1,0 +1,49 @@
+# Normal menu route to Classic; no mode-unlock or matrix hooks.
+# Command-line launches retain the original no-save prompt.
+180 NONE
+2 D
+20 NONE
+6 X
+45 NONE
+6 X
+600 SCENE_MOVIE
+30 NONE
+6 START
+600 SCENE_TITLE
+90 NONE
+6 START
+600 SCENE_MENU
+120 NONE
+# 1-P Mode > Regular Match > Classic.
+6 X
+90 NONE
+6 X
+90 NONE
+6 X
+600 SCENE_CSS
+120 NONE
+# Select Fox and start Classic on the default Very Easy difficulty.
+7 D
+27 W
+10 NONE
+6 X
+30 NONE
+6 START
+1800 SCENE_MATCH
+600 NONE
+# Lose the initial stocks, then explicitly wait for Continue.
+6 A+C
+180 A
+6 A+C
+240 A
+300 NONE
+6 A+C
+180 A
+6 A+C
+240 A
+1800 SCENE_CONTINUE
+180 NONE
+6 X
+1800 SCENE_CLASSIC_INTRO
+1800 SCENE_MATCH
+600 NONE

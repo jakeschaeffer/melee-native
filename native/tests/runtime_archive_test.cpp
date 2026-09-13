@@ -75,12 +75,53 @@ static void checkAnimationIndexing() {
     MeleeNativeArchiveRelease(bytes.data());
 }
 static std::map<const void*,size_t> registered;
+static void checkClassicIntroLayout() {
+    const char name[]="gmIntroEasyTable";
+    constexpr unsigned size=0x9B8;
+    std::vector<std::byte> bytes(32+size+8+sizeof(name));
+    put(bytes,0,bytes.size());put(bytes,4,size);put(bytes,12,1);
+    // Test floats from the first layout, splash text and last character entry.
+    put(bytes,32,0x3F800000);put(bytes,32+0x57C,0xC1200000);
+    put(bytes,32+0x6A8+27*0x1C+8,0x3F000000);
+    std::memcpy(bytes.data()+32+size+8,name,sizeof(name));
+    int key;
+    assert(MeleeNativeArchiveCreate(&key,bytes.data(),bytes.size())==0);
+    auto table=static_cast<const float*>(MeleeNativeArchivePublic(&key,name));
+    assert(table[0]==1.0f&&table[0x57C/4]==-10.0f);
+    assert(table[(0x6A8+27*0x1C+8)/4]==0.5f);
+    assert(MeleeNativeArchivePublic(&key,name)==table);
+    MeleeNativeArchiveRelease(bytes.data());
+}
+static void checkTrophyFilenames() {
+    for(const char* name:{"tyModelFileTbl","tyModelFileUsTbl"}) {
+        constexpr unsigned size=2*0x54;
+        std::vector<std::byte> bytes(32+size+8+std::strlen(name)+1);
+        put(bytes,0,bytes.size());put(bytes,4,size);put(bytes,12,1);
+        for(unsigned i=0;i<2;++i) {
+            put(bytes,32+i*0x54,0x1234+i);
+            std::memcpy(bytes.data()+32+i*0x54+4,"TyExample.dat",14);
+            std::memcpy(bytes.data()+32+i*0x54+0x24,"ToyExample_TopN_joint",22);
+        }
+        std::memcpy(bytes.data()+32+size+8,name,std::strlen(name)+1);
+        int key;
+        assert(MeleeNativeArchiveCreate(&key,bytes.data(),bytes.size())==0);
+        auto table=static_cast<const char*>(MeleeNativeArchivePublic(&key,name));
+        for(unsigned i=0;i<2;++i) {
+            unsigned id;std::memcpy(&id,table+i*0x54,sizeof(id));
+            assert(id==0x1234+i);
+            assert(std::strcmp(table+i*0x54+4,"TyExample.dat")==0);
+            assert(std::strcmp(table+i*0x54+0x24,"ToyExample_TopN_joint")==0);
+        }
+        assert(MeleeNativeArchivePublic(&key,name)==table);
+        MeleeNativeArchiveRelease(bytes.data());
+    }
+}
 extern "C" void MeleeNativeRegisterVertexBuffer(const void* data,size_t size,int little) {
     assert(data&&size&&!little); assert(registered.emplace(data,size).second);
 }
 extern "C" void MeleeNativeUnregisterVertexBuffer(const void* data) { assert(registered.erase(data)==1); }
 int main(int argc,char** argv) {
-    checkExternalBindings();checkScriptAddressSpace();checkAnimationIndexing();MeleeCheckStageFlags();
+    checkExternalBindings();checkScriptAddressSpace();checkAnimationIndexing();checkClassicIntroLayout();checkTrophyFilenames();MeleeCheckStageFlags();
     int key;
     unsigned char malformed[32]={0}; assert(MeleeNativeArchiveCreate(&key,malformed,sizeof(malformed))==-1);
     bool stage_core=false, animation_bundle=false;
@@ -116,6 +157,16 @@ int main(int argc,char** argv) {
         }
         melee::AssetArchive archive(bytes); assert(MeleeNativeArchiveCreate(&key,bytes.data(),bytes.size())==0);
         for(const auto& [name,offset]:archive.roots()) {
+            if(name=="gmIntroEasyTable") {
+                assert(MeleeNativeArchivePublic(&key,name.c_str()));
+                continue;
+            }
+            if(name=="standScene") {
+                void* root=MeleeNativeArchivePublic(&key,name.c_str());assert(root);
+                assert(MeleeNativeArchivePublic(&key,name.c_str())==root);
+                assert(MeleeCheckScene(root)>0);
+                continue;
+            }
             if(stage_core&&name!="map_head"&&name!="map_ptcl"&&name!="map_texg"&&name!="coll_data"&&name!="grGroundParam"&&name!="map_plit"&&name!="quake_model_set") continue;
             if(name.ends_with("_image_desc")||name.ends_with("_tlut_desc")||name.starts_with("dynamicsdata_")||name=="lbBgFlashColAnimData"||name.ends_with("_scene_models")||name=="Stc_rarwmdls"||name=="Stc_scemdls"||name=="lupe"||name=="tdsce"||(name.ends_with("_scene_data")||name=="pnlsce"||name=="flmsce")||name=="sqEventInitDataLevelTbl"||name=="lbAudioLoadData"||name=="MnSelectChrDataTable"||name=="MnSelectStageDataTable"||name=="ftLoadCommonData"||name=="plLoadCommonData"||name=="map_head"||name=="map_ptcl"||name=="map_texg"||name=="coll_data"||name=="grGroundParam"||name=="map_plit"||name=="quake_model_set"||name.starts_with("ftData")||name.ends_with("_figatree")||name=="itPublicData"||name=="ALDYakuAll"||name=="itemdata"||name=="yakumono_param"||(name.starts_with("eff")&&name.ends_with("DataTable"))||name=="lbRefData"||name=="lbRumbleData"||name=="MemSnapIconData"||name=="MemCardIconData"||name.starts_with("SIS_")||name.starts_with("ty")||name.starts_with("MenMain")||name.starts_with("ScMenMain")||name.starts_with("Ttl")||name.starts_with("ScTitle")||name=="TitleMark_sobjdesc") {
                 void* root=MeleeNativeArchivePublic(&key,name.c_str());assert(root);

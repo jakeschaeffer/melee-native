@@ -62,6 +62,8 @@ static bool replayInput() {
             else if(key=="SCENE_CSS") wait_scene=8;
             else if(key=="SCENE_SSS") wait_scene=9;
             else if(key=="SCENE_MOVIE") wait_scene=28;
+            else if(key=="SCENE_CLASSIC_INTRO") wait_scene=32;
+            else if(key=="SCENE_CONTINUE") wait_scene=34;
             else {
                 size_t start=0;
                 do {

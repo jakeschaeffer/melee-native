@@ -575,6 +575,15 @@ struct Archive {
                 table[i]=materialize(i<4?scene_types[i]:anim_types[(i-4)%4],*target);
             result=table;
         }
+        else if(root->first=="gmIntroEasyTable") {
+            // Classic's splash-layout table contains only 32-bit floats and
+            // padding (gm_1832.c), with no pointers to widen on the host.
+            if(extent(root->second)<0x9B8)
+                throw std::runtime_error("Truncated Classic intro layout table");
+            for(auto field:pointer_fields) if(field>=root->second&&field<root->second+0x9B8)
+                throw std::runtime_error("Unexpected pointer in Classic intro layout table");
+            result=materialize(AT_WORDS,root->second);
+        }
         else if(root->first=="lbRefData") result=materialize(AT_REFRACT,root->second);
         else if(root->first=="MemCardIconData"||root->first=="MemSnapIconData") {
             unsigned count=root->first=="MemCardIconData"?5:2;
@@ -589,10 +598,29 @@ struct Archive {
             result=table;
         }
         else if(root->first=="tyInitModelTbl"||root->first=="tyInitModelDTbl") result=materialize(AT_TROPHIES,root->second);
+        else if(root->first=="tyModelFileTbl"||root->first=="tyModelFileUsTbl") {
+            // Toy_8030813C walks 0x54-byte records: a trophy ID followed by
+            // inline filename[32] and joint-symbol[48], not host pointers.
+            const auto offset=root->second;
+            const auto size=extent(offset);
+            if(!size||size%0x54) throw std::runtime_error("Invalid trophy filename table size");
+            for(auto field:pointer_fields) if(field>=offset&&field<offset+size)
+                throw std::runtime_error("Unexpected pointer in trophy filename table");
+            auto table=static_cast<std::byte*>(allocate(size));
+            auto bytes=source.bytes(offset,size);
+            std::memcpy(table,bytes.data(),size);
+            for(size_t i=0;i<size;i+=0x54) {
+                auto id=source.u32(offset+i);
+                std::memcpy(table+i,&id,sizeof(id));
+                if(!std::memchr(table+i+4,0,32)||!std::memchr(table+i+0x24,0,48))
+                    throw std::runtime_error("Unterminated trophy filename or symbol");
+            }
+            result=table;
+        }
         else if(root->first=="tyDisplayModelTbl"||root->first=="tyDisplayModelUsTbl") result=materialize(AT_TROPHY_DISPLAY,root->second);
         else if(root->first=="tyModelSortTbl"||root->first=="tyExpDifferentTbl"||root->first=="tyNoGetUsTbl") result=materialize(AT_HALVES,root->second);
         else if(root->first.ends_with("_scene_models")||root->first=="Stc_rarwmdls"||root->first=="Stc_scemdls"||root->first=="lupe"||root->first=="tdsce") result=materialize(AT_MODELS,root->second);
-        else if(root->first.ends_with("_scene_data")||root->first=="pnlsce"||root->first=="flmsce") result=materialize(AT_SCENE,root->second);
+        else if(root->first.ends_with("_scene_data")||root->first=="pnlsce"||root->first=="flmsce"||root->first=="standScene") result=materialize(AT_SCENE,root->second);
         else if(root->first.starts_with("ftDemo")&&root->first.find("MotionFile")!=std::string::npos) result=materialize(AT_RAW,root->second);
         else if(root->first.ends_with("_animjoint")) result=materialize(AT_ANIM,root->second);
         else if(root->first.ends_with("_matanim_joint")) result=materialize(AT_MATANIMJOINT,root->second);
