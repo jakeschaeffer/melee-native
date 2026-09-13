@@ -6,6 +6,8 @@ using MeleeDiscValidator = std::function<std::string(const std::string&)>;
 std::string MeleeLaunchDisc(MeleeDiscValidator validate, bool forceSetup = false);
 #ifdef __APPLE__
 void MeleeInstallAppMenu(std::function<void()> changeDisc);
+bool MeleeWidescreenPreference();
+void MeleeSaveWidescreenPreference(bool enabled);
 #else
 std::string MeleeChooseDisc(const std::string& error = {});
 void MeleeShowLaunchError(const std::string& error);

@@ -1,6 +1,7 @@
 #import <AppKit/AppKit.h>
 #include "platform_launcher.h"
 #include <cstdio>
+#include "include/melee_display.h"
 
 static NSString* const discBookmarkKey = @"DiscImageBookmark";
 
@@ -227,11 +228,20 @@ std::string MeleeLaunchDisc(MeleeDiscValidator validate, bool forceSetup) {
 }
 @end
 @implementation MeleeMenu
+- (void)aspectRatio:(NSMenuItem*)sender {
+    MeleeNativeSetWidescreen(sender.tag != 0);
+}
+- (void)fullscreen:(id)sender { MeleeNativeToggleFullscreen(); }
+- (BOOL)validateMenuItem:(NSMenuItem*)item {
+    if (item.action == @selector(aspectRatio:))
+        item.state = (item.tag == MeleeNativeWidescreenEnabled()) ? NSControlStateValueOn : NSControlStateValueOff;
+    return YES;
+}
 - (void)changeDisc:(id)sender { restart(); }
 - (void)controls:(id)sender {
     NSAlert* alert = [[NSAlert alloc] init];
     alert.messageText = @"Keyboard controls";
-    alert.informativeText = @"W A S D   Move\nX   Attack / confirm\nZ   Special / back\nC / V   Jump\nQ / E   Shield\nR   Grab\nI J K L   C-stick\nReturn   Start / pause\n\nProgress is not saved in this experimental build.";
+    alert.informativeText = @"W A S D   Move\nX   Attack / confirm\nZ   Special / back\nC / V   Jump\nQ / E   Shield\nR   Grab\nI J K L   C-stick\nReturn   Start / pause\nF8   Switch Native (4:3) / 21:9\nF11   Toggle fullscreen\n\nView > Aspect Ratio selects Native (4:3) or 21:9. The choice is remembered. Menus remain 4:3, and the HUD keeps its original proportions. Other screen shapes use black bars to preserve the selected ratio.\n\nProgress is not saved in this experimental build.";
     [alert addButtonWithTitle:@"Back to Game"];
     [alert runModal];
 }
@@ -258,8 +268,32 @@ void MeleeInstallAppMenu(std::function<void()> changeDisc) {
         }
         [menu addItem:[NSMenuItem separatorItem]];
         [menu addItemWithTitle:@"Quit Melee Native" action:@selector(terminate:) keyEquivalent:@"q"];
+        NSMenuItem* viewRoot = [[NSMenuItem alloc] init];
+        [bar addItem:viewRoot];
+        NSMenu* view = [[NSMenu alloc] initWithTitle:@"View"];
+        viewRoot.submenu = view;
+        NSMenuItem* aspectItem = [view addItemWithTitle:@"Aspect Ratio" action:nil keyEquivalent:@""];
+        NSMenu* aspectMenu = [[NSMenu alloc] initWithTitle:@"Aspect Ratio"];
+        aspectItem.submenu = aspectMenu;
+        NSInteger aspectTag = 0;
+        for (NSString* title in @[@"Native (4:3)", @"21:9"]) {
+            NSMenuItem* item = [aspectMenu addItemWithTitle:title action:@selector(aspectRatio:) keyEquivalent:@""];
+            item.tag = aspectTag++;
+            item.target = actions;
+        }
+        NSMenuItem* fullscreenItem = [view addItemWithTitle:@"Toggle Full Screen" action:@selector(fullscreen:) keyEquivalent:@"f"];
+        fullscreenItem.keyEquivalentModifierMask = NSEventModifierFlagCommand | NSEventModifierFlagControl;
+        fullscreenItem.target = actions;
         NSApp.mainMenu = bar;
     }
+}
+
+bool MeleeWidescreenPreference() {
+    return [NSUserDefaults.standardUserDefaults boolForKey:@"PrototypeWidescreen"];
+}
+
+void MeleeSaveWidescreenPreference(bool enabled) {
+    [NSUserDefaults.standardUserDefaults setBool:enabled forKey:@"PrototypeWidescreen"];
 }
 
 void MeleePrepareAppLogging() {

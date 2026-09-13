@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <fstream>
 #include <string>
+#include "include/melee_display.h"
 extern "C" void MeleeNativeSetKeyboard(u16, s8, s8, s8, s8);
 static std::array<bool, SDL_SCANCODE_COUNT> pressed;
 static int ready_scene=-1;
@@ -13,6 +14,7 @@ extern "C" void MeleeNativeRenderCheckScene(int);
 extern "C" void MeleeNativeMatrixScene(int);
 extern "C" void MeleeNativeInputScene(int scene) {
     ready_scene=scene;
+    MeleeNativeDisplayScene(scene);
     if(std::getenv("MELEE_TRACE_INPUT")) std::fprintf(stderr,"[input] ready scene %d\n",scene);
     MeleeNativeRenderCheckScene(scene);
     MeleeNativeMatrixScene(scene);
@@ -108,6 +110,10 @@ static bool replayInput() {
     MeleeNativeSetKeyboard(buttons,x,y,cx,cy);--remaining;return true;
 }
 extern "C" void MeleeNativeKeyboardEvent(const SDL_Event* event) {
+    if (event->type == SDL_EVENT_KEY_DOWN && !event->key.repeat) {
+        if (event->key.scancode == SDL_SCANCODE_F8) MeleeNativeToggleWidescreen();
+        if (event->key.scancode == SDL_SCANCODE_F11) MeleeNativeToggleFullscreen();
+    }
     if (std::getenv("MELEE_TRACE_INPUT") && (event->type == SDL_EVENT_KEY_DOWN || event->type == SDL_EVENT_KEY_UP))
         std::fprintf(stderr, "[keyboard] %s scancode=%d\n", event->type == SDL_EVENT_KEY_DOWN ? "down" : "up", int(event->key.scancode));
     if(event->type==SDL_EVENT_KEY_DOWN && event->key.scancode>SDL_SCANCODE_UNKNOWN && event->key.scancode<SDL_SCANCODE_COUNT)

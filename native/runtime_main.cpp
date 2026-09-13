@@ -10,6 +10,7 @@
 #include <cstring>
 #include <SDL3/SDL.h>
 #include "disc_fonts.h"
+#include "include/melee_display.h"
 
 static std::string executable_path, disc_path;
 static bool graphical_launch;
@@ -69,6 +70,11 @@ int main(int argc, char** argv) {
     }
     std::fprintf(stderr, "[launch] Loaded GALE01 revision 2 from %s\n", disc_path.c_str());
     AuroraConfig config{};
+    bool widescreen = false;
+#ifdef __APPLE__
+    widescreen = MeleeWidescreenPreference();
+#endif
+    if (const char* value = std::getenv("MELEE_WIDESCREEN")) widescreen = std::strcmp(value, "1") == 0;
     config.appName = "Melee Native";
 #ifdef __APPLE__
     config.desiredBackend = BACKEND_METAL;
@@ -81,12 +87,14 @@ int main(int argc, char** argv) {
     config.cachePath = cache_path.c_str();
 #endif
     config.vsync = true;
-    config.windowWidth = 960;
+    config.windowWidth = widescreen ? 1680 : 960;
     config.windowHeight = 720;
+    config.startFullscreen = std::getenv("MELEE_FULLSCREEN") && std::strcmp(std::getenv("MELEE_FULLSCREEN"), "1") == 0;
     config.logCallback = log_message;
     config.mem1Size = MEM1_DEFAULT_SIZE;
     config.mem2Size = ARAM_DEFAULT_SIZE;
     const auto info = aurora_initialize(argc, argv, &config);
+    MeleeNativeDisplayInitialize(info.window, widescreen);
     if (std::getenv("MELEE_MATRIX_TEST")) {
         if (const auto* test = std::getenv("MELEE_TEST_CASE")) {
             const std::string title = std::string("Melee test: ") + test;

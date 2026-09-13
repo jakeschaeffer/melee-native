@@ -80,6 +80,12 @@ else()
 endif()
 
 enable_testing()
+add_executable(native_display_test tests/display_test.cpp)
+target_include_directories(native_display_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_compile_options(native_display_test PRIVATE -fsanitize=address,undefined)
+target_link_options(native_display_test PRIVATE -fsanitize=address,undefined)
+add_test(NAME native_display COMMAND native_display_test)
+set_tests_properties(native_display PROPERTIES LABELS melee)
 add_executable(native_core_test tests/core_test.c
   "${MELEE_ROOT}/src/sysdolphin/baselib/util.c"
   "${MELEE_ROOT}/src/sysdolphin/baselib/id.c"
@@ -192,7 +198,7 @@ foreach(target melee_native melee_boot_probe)
   else()
     target_sources(${target} PRIVATE platform/linux/launcher.cpp)
   endif()
-  target_sources(${target} PRIVATE render_check.cpp)
+  target_sources(${target} PRIVATE render_check.cpp display_runtime.cpp)
   target_include_directories(${target} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}" "${MELEE_AURORA_DIR}/lib")
   target_sources(${target} PRIVATE audio_host.cpp movie_host.cpp dvd_bridge.cpp card_bridge.cpp keyboard_input.cpp archive_runtime.cpp asset_archive.cpp $<TARGET_OBJECTS:melee_audio_runtime>)
   target_link_libraries(${target} PRIVATE SDL3::SDL3)

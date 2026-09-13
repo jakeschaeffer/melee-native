@@ -16,6 +16,9 @@
 #include <dolphin/gx/GXTransform.h>
 #include <dolphin/mtx.h>
 #include <dolphin/vi.h> // IWYU pragma: keep
+#ifdef MELEE_NATIVE
+#include <melee_display.h>
+#endif
 
 static HSD_ClassInfo* default_class;
 static HSD_CObj* current;
@@ -284,6 +287,11 @@ static bool setupNormalCamera(HSD_CObj* cobj)
     GXSetScissor((u32) left, (u32) top, (u32) width, (u32) height);
 
     projection_type = makeProjectionMtx(cobj, p);
+#ifdef MELEE_NATIVE
+    // Presentation-only correction: keep the game's camera state untouched.
+    // Offscreen cameras intentionally bypass the widescreen projection.
+    MeleeNativeAdjustProjection(p);
+#endif
     GXSetProjection(p, projection_type);
 
     return true;

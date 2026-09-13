@@ -543,6 +543,9 @@ void lbShadow_8000F38C(s32 arg0)
                 }
 
                 HSD_ShadowInit(fp->x20A4.shadow);
+#ifdef MELEE_NATIVE
+                HSD_RenderPass saved_pass = HSD_GetCurrentRenderPass();
+#endif
                 HSD_StartRender(HSD_RP_OFFSCREEN);
                 HSD_GObj_804D7814 = gobj;
                 HSD_ShadowStartRender(fp->x20A4.shadow);
@@ -551,6 +554,11 @@ void lbShadow_8000F38C(s32 arg0)
                 }
                 HSD_ShadowEndRender(fp->x20A4.shadow);
                 HSD_Init_803755A8();
+#ifdef MELEE_NATIVE
+                // The original end-render function is a no-op. Restore the
+                // screen pass so subsequent cameras get presentation scaling.
+                HSD_StartRender(saved_pass);
+#endif
             }
         }
 

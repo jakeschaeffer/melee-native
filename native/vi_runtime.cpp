@@ -1,4 +1,5 @@
 #include "os_runtime.h"
+#include "include/melee_display.h"
 #include <aurora/aurora.h>
 #include <aurora/event.h>
 #include <dolphin/vi.h>
@@ -55,6 +56,7 @@ void VIWaitForRetrace(void) {
     // Keep the recording frame open until an EFB copy finishes; submitting
     // an empty Aurora frame clears the displayed image and causes a flash.
     if (frame_active && (frame_ready || black != presented_black)) {
+        MeleeNativeDisplayMask();
         // Composite blanking after GX drawing without mutating game GX state.
         if (black) ImGui::GetForegroundDrawList()->AddRectFilled(
             ImVec2(0,0), ImGui::GetIO().DisplaySize, IM_COL32(0,0,0,255));
@@ -92,6 +94,7 @@ void VIWaitForRetrace(void) {
         }
         MeleeNativePumpAlarms();
         MeleeNativePumpCards();
+        MeleeNativeDisplayUpdate();
         if (frame_active || aurora_begin_frame()) { frame_active = true; break; }
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
